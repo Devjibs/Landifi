@@ -1,7 +1,7 @@
 import {
   ConflictException,
   Injectable,
-  NotImplementedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './schemas/user.schema';
@@ -33,7 +33,7 @@ export class UsersService {
     });
 
     if (!newUser) {
-      throw new NotImplementedException('Failed to create user!');
+      throw new InternalServerErrorException('Failed to create user!');
     }
 
     const { password: createdPassword, ...rest } = newUser.toObject();
