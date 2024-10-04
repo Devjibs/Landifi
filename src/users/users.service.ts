@@ -1,8 +1,10 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './schemas/user.schema';
@@ -12,10 +14,16 @@ import * as bcryptjs from 'bcryptjs';
 import { QueryUserDto } from './dto/query-user.dto';
 import { SearchUserDto } from './dto/search-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RefreshToken } from 'src/auth/schema/referesh-token.schema';
+import { UserParamsDto } from './dto/params-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(RefreshToken.name)
+    private refreshTokenModel: Model<RefreshToken>,
+  ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const { email, firstName, lastName, password, userType } = createUserDto;
@@ -86,9 +94,14 @@ export class UsersService {
   }
 
   async updateUser(
+    userParamsDto: UserParamsDto,
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<User> {
+    if (userParamsDto.id !== userId) {
+      throw new ForbiddenException('You are not authorized');
+    }
+
     const updatedUser = await this.userModel.findByIdAndUpdate(
       userId,
       updateUserDto,
@@ -103,11 +116,24 @@ export class UsersService {
     return updatedUser;
   }
 
-  async removeUserById(userId: string): Promise<string> {
-    const deletedUser = await this.userModel.findByIdAndDelete(userId);
+  async removeUserById(
+    userParamsDto: UserParamsDto,
+    userId: string,
+  ): Promise<string> {
+    if (userParamsDto.id !== userId) {
+      throw new ForbiddenException('You are not authorized');
+    }
+
+    const deletedUser = await this.userModel.findByIdAndDelete(
+      userParamsDto.id,
+    );
     if (!deletedUser) {
       throw new NotFoundException(`User with the specified ID not found!`);
     }
+
+    // TODO Delete refresh token from database if user is deleted
+    await this.refreshTokenModel.findOneAndDelete({ userId: deletedUser._id });
+
     return `User deleted successfully!`;
   }
 }

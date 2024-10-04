@@ -49,12 +49,12 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @Req() { userId },
   ) {
-    return this.usersService.updateUser(userParamsDto.id, updateUserDto);
+    return this.usersService.updateUser(userParamsDto, userId, updateUserDto);
   }
 
   @UseGuards(AuthenticationGuard)
   @Delete(':id')
   async removeUser(@Param() userParamsDto: UserParamsDto, @Req() { userId }) {
-    return this.usersService.removeUserById(userParamsDto.id);
+    return this.usersService.removeUserById(userParamsDto, userId);
   }
 }
