@@ -47,3 +47,11 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+//  Remove sensitive data from response object globally
+UserSchema.methods.toJSON = function () {
+  const user = this;
+  const userObject = user.toObject();
+  delete userObject.password;
+  return userObject;
+};

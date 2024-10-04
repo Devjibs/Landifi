@@ -37,7 +37,7 @@ export class UsersController {
 
   @Get(':id')
   async findUserById(@Param() userParamsDto: UserParamsDto) {
-    return this.usersService.findUserById(userParamsDto.userId);
+    return this.usersService.findUserById(userParamsDto.id);
   }
 
   // TODO Add authenticaiton and authorization guards
@@ -47,12 +47,12 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @Req() { userId },
   ) {
-    return this.usersService.updateUser(userParamsDto.userId, updateUserDto);
+    return this.usersService.updateUser(userParamsDto.id, updateUserDto);
   }
 
   // TODO Add authenticaiton and authorization guards
   @Delete(':id')
   async removeUser(@Param() userParamsDto: UserParamsDto, @Req() { userId }) {
-    return this.usersService.removeUserById(userParamsDto.userId);
+    return this.usersService.removeUserById(userParamsDto.id);
   }
 }

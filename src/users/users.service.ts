@@ -36,16 +36,16 @@ export class UsersService {
     if (!newUser) {
       throw new InternalServerErrorException('Failed to create user!');
     }
-    const { password: createdPassword, ...rest } = newUser.toObject();
 
     // TODO Send email verification mail to users
-    return { ...rest };
+    return newUser;
   }
 
   async findAllUsers(queryUserDto: QueryUserDto): Promise<string | User[]> {
     const { page = 1, limit = 10 } = queryUserDto;
     const allUsers = await this.userModel
       .find()
+
       .skip((+page - 1) * +limit)
       .limit(+limit);
 
