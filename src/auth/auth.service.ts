@@ -31,6 +31,7 @@ export class AuthService {
       throw new UnauthorizedException('Wrong credentials!');
     }
 
+    // Call the generateUserTokens function
     const tokens = await this.generateUserTokens(user._id);
     return {
       ...tokens,
@@ -38,6 +39,7 @@ export class AuthService {
     };
   }
 
+  // Handles regenration of new refresh token attending to request from frontend
   async refreshTokens(refreshTokenData: RefreshTokenDto) {
     const token = await this.refreshTokenModel.findOne({
       token: refreshTokenData.refreshToken,
@@ -56,6 +58,7 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync(payload);
     const refreshToken = uuidv4();
 
+    // Call the store refresh token function
     await this.storeRefreshToken(refreshToken, userId);
     return {
       accessToken,
@@ -63,6 +66,7 @@ export class AuthService {
     };
   }
 
+  // Creates and update refresh token in the database
   async storeRefreshToken(token: string, userId: string) {
     // Calculate expiry date 3 days from now
     const expiryDate = new Date();
