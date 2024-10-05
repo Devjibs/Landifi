@@ -28,7 +28,7 @@ export class AuthenticationGuard implements CanActivate {
     try {
       const payload = this.jwtService.verify(token, {
         secret: this.configService.get<string>('secrets.jwtSecret'),
-      }); 
+      });
       request.userId = payload.sub;
     } catch (error) {
       Logger.error(error.message);

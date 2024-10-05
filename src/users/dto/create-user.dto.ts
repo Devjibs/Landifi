@@ -12,7 +12,7 @@ import { UserType } from '../schemas/user.schema';
 
 export class CreateUserDto {
   @IsEmail()
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => value.toLowerCase().trim())
   @IsDefined()
   email: string;
 

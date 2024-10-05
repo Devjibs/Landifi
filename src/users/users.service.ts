@@ -1,8 +1,10 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './schemas/user.schema';
@@ -12,12 +14,24 @@ import * as bcryptjs from 'bcryptjs';
 import { QueryUserDto } from './dto/query-user.dto';
 import { SearchUserDto } from './dto/search-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RefreshToken } from 'src/auth/schema/referesh-token.schema';
+import { UserParamsDto } from './dto/params-user.dto';
+import { MailService } from 'src/mail/mail.service';
+import { EmailVerificationToken } from 'src/auth/schema/verification-token.schema';
+import { nanoid } from 'nanoid';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(RefreshToken.name)
+    private refreshTokenModel: Model<RefreshToken>,
+    @InjectModel(EmailVerificationToken.name)
+    private emailVerificationModel: Model<EmailVerificationToken>,
+    private mailService: MailService,
+  ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
+  async createUser(createUserDto: CreateUserDto): Promise<string | User> {
     const { email, firstName, lastName, password, userType } = createUserDto;
     const existingUser = await this.userModel.findOne({ email: email });
     if (existingUser) {
@@ -37,8 +51,26 @@ export class UsersService {
       throw new InternalServerErrorException('Failed to create user!');
     }
 
-    // TODO Send email verification mail to users
-    return newUser;
+    const newUserObject = newUser.toObject();
+
+    // Generate email verification link
+    const expiryDate = new Date();
+    expiryDate.setHours(expiryDate.getHours() + 1);
+    const verificationToken = nanoid(64);
+    await this.emailVerificationModel.create({
+      token: verificationToken,
+      userId: newUserObject._id,
+      expiryDate,
+    });
+
+    // Send link to user by email
+    this.mailService.sendVerificationEmail(
+      email,
+      verificationToken,
+      newUserObject.firstName,
+    );
+
+    return 'Account created successfully. Please check your email to proceed.';
   }
 
   async findAllUsers(queryUserDto: QueryUserDto): Promise<string | User[]> {
@@ -86,9 +118,14 @@ export class UsersService {
   }
 
   async updateUser(
+    userParamsDto: UserParamsDto,
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<User> {
+    if (userParamsDto.id !== userId) {
+      throw new ForbiddenException('You are not authorized');
+    }
+
     const updatedUser = await this.userModel.findByIdAndUpdate(
       userId,
       updateUserDto,
@@ -103,11 +140,24 @@ export class UsersService {
     return updatedUser;
   }
 
-  async removeUserById(userId: string): Promise<string> {
-    const deletedUser = await this.userModel.findByIdAndDelete(userId);
+  async removeUserById(
+    userParamsDto: UserParamsDto,
+    userId: string,
+  ): Promise<string> {
+    if (userParamsDto.id !== userId) {
+      throw new ForbiddenException('You are not authorized');
+    }
+
+    const deletedUser = await this.userModel.findByIdAndDelete(
+      userParamsDto.id,
+    );
     if (!deletedUser) {
       throw new NotFoundException(`User with the specified ID not found!`);
     }
+
+    // Delete refresh token from database if user is deleted
+    await this.refreshTokenModel.findOneAndDelete({ userId: deletedUser._id });
+
     return `User deleted successfully!`;
   }
 }
