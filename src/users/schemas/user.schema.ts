@@ -8,7 +8,7 @@ export enum UserType {
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema()
+@Schema({ timestamps: true, versionKey: false })
 export class User {
   @Prop({
     required: true,
@@ -42,17 +42,16 @@ export class User {
   })
   userType: UserType;
 
-  @Prop({
-    default: Date.now,
-    type: Date,
-  })
-  createdAt: Date;
-
-  @Prop({
-    default: Date.now,
-    type: Date,
-  })
-  updatedAt: Date;
+  @Prop({ default: false })
+  isVerified: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+//  Remove sensitive data from response object globally
+UserSchema.methods.toJSON = function () {
+  const user = this;
+  const userObject = user.toObject();
+  delete userObject.password;
+  return userObject;
+};
