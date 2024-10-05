@@ -8,6 +8,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from './http-exception/http-exception.filter';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
 import config from './config/config';
 
 @Module({
@@ -16,6 +17,7 @@ import config from './config/config';
     MongooseModule.forRoot(process.env.DATABASE_URL),
     UsersModule,
     AuthModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

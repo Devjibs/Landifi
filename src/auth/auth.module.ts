@@ -9,12 +9,23 @@ import {
   RefreshToken,
   RefreshTokenSchema,
 } from './schema/referesh-token.schema';
+import { ResetToken, ResetTokenSchema } from './schema/reset-token.schema';
+import { MailModule } from 'src/mail/mail.module';
+import {
+  EmailVerificationToken,
+  EmailVerificationTokenSchema,
+} from './schema/verification-token.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: RefreshToken.name, schema: RefreshTokenSchema },
+      { name: ResetToken.name, schema: ResetTokenSchema },
+      {
+        name: EmailVerificationToken.name,
+        schema: EmailVerificationTokenSchema,
+      },
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -26,6 +37,7 @@ import {
       inject: [ConfigService],
       global: true,
     }),
+    MailModule,
   ],
   providers: [AuthService],
   controllers: [AuthController],
