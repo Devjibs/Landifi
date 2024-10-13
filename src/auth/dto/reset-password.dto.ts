@@ -4,7 +4,7 @@ import { IsString, Matches, MinLength } from 'class-validator';
 export class ResetPasswordDto {
   @IsString()
   @Transform(({ value }) => value.trim())
-  resetToken: string;
+  resetOTP: string;
 
   @IsString()
   @Transform(({ value }) => value.trim())

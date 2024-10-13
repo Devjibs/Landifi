@@ -4,5 +4,5 @@ import { IsString } from 'class-validator';
 export class VerifyEmailDto {
   @IsString()
   @Transform(({ value }) => value.trim())
-  verificationToken: string;
+  verificationOTP: string;
 }
