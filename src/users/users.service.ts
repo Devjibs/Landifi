@@ -19,6 +19,7 @@ import { UserParamsDto } from './dto/params-user.dto';
 import { MailService } from 'src/mail/mail.service';
 import { EmailVerificationToken } from 'src/auth/schema/verification-token.schema';
 import { nanoid } from 'nanoid';
+import { PropertiesService } from 'src/properties/properties.service';
 
 @Injectable()
 export class UsersService {
@@ -29,6 +30,7 @@ export class UsersService {
     @InjectModel(EmailVerificationToken.name)
     private emailVerificationModel: Model<EmailVerificationToken>,
     private mailService: MailService,
+    private propertiesService: PropertiesService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<string | User> {
@@ -157,7 +159,17 @@ export class UsersService {
 
     // Delete refresh token from database if user is deleted
     await this.refreshTokenModel.findOneAndDelete({ userId: deletedUser._id });
+    // Delete all property by the user
+    await this.propertiesService.removeAll(deletedUser._id.toString());
 
     return `User deleted successfully!`;
+  }
+
+  async getUserPermission(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User not found!`);
+    }
+    return user.userType;
   }
 }

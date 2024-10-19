@@ -96,6 +96,7 @@ export class AuthService {
 
   // Handles regenration of new refresh token attending to request from frontend
   async refreshTokens(refreshTokenData: RefreshTokenDto) {
+    // TODO: Ensures if refresh token has expired, prompt user to login instead of generating new refresh token
     const token = await this.refreshTokenModel.findOne({
       token: refreshTokenData.refreshToken,
       expiryDate: { $gte: new Date() },

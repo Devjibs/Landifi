@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -12,6 +12,7 @@ import {
   EmailVerificationTokenSchema,
 } from 'src/auth/schema/verification-token.schema';
 import { MailModule } from 'src/mail/mail.module';
+import { PropertiesModule } from 'src/properties/properties.module';
 
 @Module({
   imports: [
@@ -23,9 +24,11 @@ import { MailModule } from 'src/mail/mail.module';
         schema: EmailVerificationTokenSchema,
       },
     ]),
-    MailModule
+    MailModule,
+    forwardRef(() => PropertiesModule),
   ],
   controllers: [UsersController],
   providers: [UsersService],
+  exports: [UsersService],
 })
 export class UsersModule {}

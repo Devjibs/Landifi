@@ -1,10 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
-
-export enum UserType {
-  LANDLORD = 'landlord',
-  TENANT = 'tenant',
-}
+import { HydratedDocument, SchemaTypes } from 'mongoose';
+import { Role } from 'src/common/enums/role.enum';
+import { Lease } from 'src/leases/schemas/lease.schema';
+import { Property } from 'src/properties/schema/property.schema';
+import { Sale } from 'src/sales/schemas/sale.schema';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -38,9 +37,27 @@ export class User {
 
   @Prop({
     required: true,
-    enum: UserType,
+    enum: Role,
   })
-  userType: UserType;
+  userType: Role;
+
+  @Prop({
+    type: SchemaTypes.ObjectId,
+    ref: 'Property',
+  })
+  properties: Property;
+
+  @Prop({
+    type: SchemaTypes.ObjectId,
+    ref: 'Lease',
+  })
+  leases: Lease;
+
+  @Prop({
+    type: SchemaTypes.ObjectId,
+    ref: 'Sale',
+  })
+  purchases: Sale;
 
   @Prop({ default: false })
   isVerified: boolean;

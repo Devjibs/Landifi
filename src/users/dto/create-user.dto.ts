@@ -8,7 +8,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { UserType } from '../schemas/user.schema';
+import { Role } from 'src/common/enums/role.enum';
 
 export class CreateUserDto {
   @IsEmail()
@@ -48,6 +48,6 @@ export class CreateUserDto {
 
   @IsDefined()
   @Transform(({ value }) => value.toLowerCase().trim())
-  @IsEnum(UserType)
-  userType: UserType;
+  @IsEnum(Role)
+  userType: Role;
 }
