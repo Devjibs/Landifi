@@ -19,7 +19,11 @@ import { UserParamsDto } from './dto/params-user.dto';
 import { MailService } from 'src/mail/mail.service';
 import { EmailVerificationToken } from 'src/auth/schema/verification-token.schema';
 import { nanoid } from 'nanoid';
+<<<<<<< HEAD
 import { PropertiesService } from 'src/properties/properties.service';
+=======
+import * as crypto from 'crypto';
+>>>>>>> main
 
 @Injectable()
 export class UsersService {
@@ -59,7 +63,9 @@ export class UsersService {
     const expiryDate = new Date();
     expiryDate.setHours(expiryDate.getHours() + 1);
     const verificationToken = nanoid(64);
+    const verificationOTP = crypto.randomInt(100000, 1000000).toString();
     await this.emailVerificationModel.create({
+      OTP: verificationOTP,
       token: verificationToken,
       userId: newUserObject._id,
       expiryDate,
@@ -68,7 +74,7 @@ export class UsersService {
     // Send link to user by email
     this.mailService.sendVerificationEmail(
       email,
-      verificationToken,
+      verificationOTP,
       newUserObject.firstName,
     );
 

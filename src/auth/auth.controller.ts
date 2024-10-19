@@ -15,6 +15,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { RequestionNewVerificationDto } from './dto/request-new-verification.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -29,6 +30,11 @@ export class AuthController {
   @Post('emailverification')
   async emailVerification(@Body() verifyEmailDto: VerifyEmailDto) {
     return this.authService.emailVerification(verifyEmailDto);
+  }
+
+  @Post('new-verification-request')
+  async requestNewVerification(@Body() requestionNewVerificationDto: RequestionNewVerificationDto) {
+    return this.authService.requestNewVerification(requestionNewVerificationDto);
   }
 
   @Post('refresh-token')

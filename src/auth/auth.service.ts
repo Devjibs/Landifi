@@ -4,24 +4,25 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UsersService } from 'src/users/users.service';
+import { nanoid } from 'nanoid';
+import { v4 as uuidv4 } from 'uuid';
+import * as bcryptjs from 'bcryptjs';
+import * as crypto from 'crypto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/users/schemas/user.schema';
 import { Model } from 'mongoose';
-import * as bcryptjs from 'bcryptjs';
 import { RefreshToken } from './schema/referesh-token.schema';
 import { RefreshTokenDto } from './dto/refresh-tokens.dto';
-import { v4 as uuidv4 } from 'uuid';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { nanoid } from 'nanoid';
 import { ResetToken } from './schema/reset-token.schema';
 import { MailService } from 'src/mail/mail.service';
 import { EmailVerificationToken } from './schema/verification-token.schema';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { RequestionNewVerificationDto } from './dto/request-new-verification.dto';
 
 @Injectable()
 export class AuthService {
@@ -54,23 +55,21 @@ export class AuthService {
       const existingEmailVerification =
         await this.emailVerificationModel.findOne({ userId: user._id });
 
-      // if (!existingEmailVerification) {
-      //   throw new NotFoundException('Invalid or expired token!');
-      // }
-
       if (
         !existingEmailVerification ||
         existingEmailVerification.expiryDate >= new Date()
       ) {
         await this.emailVerificationModel.findOneAndDelete({
           userId: user._id,
-          // id: existingEmailVerification._id,
         });
 
+        // Create verification
         const expiryDate = new Date();
         expiryDate.setHours(expiryDate.getHours() + 1);
         const verificationToken = nanoid(64);
+        const verificationOTP = crypto.randomInt(100000, 1000000).toString();
         await this.emailVerificationModel.create({
+          OTP: verificationOTP,
           token: verificationToken,
           userId: user._id,
           expiryDate,
@@ -79,7 +78,7 @@ export class AuthService {
         // Send link to user by email
         this.mailService.sendVerificationEmail(
           email,
-          verificationToken,
+          verificationOTP,
           user.firstName,
         );
         return 'User not verified! Please verify your email to continue.';
@@ -162,26 +161,36 @@ export class AuthService {
     const expiryDate = new Date();
     expiryDate.setHours(expiryDate.getHours() + 1);
     const resetToken = nanoid(64);
+    const resetOTP = crypto.randomInt(100000, 1000000).toString();
     await this.resetTokenModel.create({
+      OTP: resetOTP,
       token: resetToken,
       userId: user._id,
       expiryDate,
     });
 
     // Send link to user by email
-    this.mailService.sendPasswordResetEmail(email, resetToken, user.firstName);
+    this.mailService.sendPasswordResetEmail(email, resetOTP, user.firstName);
 
     return { message: 'If this user exists, they will receive an email.' };
   }
 
   async resetPassword(resetPasswordData: ResetPasswordDto) {
-    const { resetToken, newPassword } = resetPasswordData;
+    const { resetOTP, newPassword } = resetPasswordData;
+    const validOTP = await this.resetTokenModel.findOne({
+      OTP: resetOTP,
+    });
+
+    if (!validOTP) {
+      throw new NotFoundException('Invalid OTP');
+    }
+
     const validToken = await this.resetTokenModel.findOneAndDelete({
-      token: resetToken,
+      token: validOTP.token,
       expiryDate: { $gte: new Date() },
     });
     if (!validToken) {
-      throw new UnauthorizedException('Invalid link');
+      throw new UnauthorizedException('Expired OTP');
     }
     const user = await this.userModel.findById(validToken.userId);
     if (!user) {
@@ -195,14 +204,21 @@ export class AuthService {
 
   // Handles email verificaiton
   async emailVerification(verifyEmailData: VerifyEmailDto) {
-    const { verificationToken } = verifyEmailData;
+    const { verificationOTP } = verifyEmailData;
+    const validOTP = await this.emailVerificationModel.findOne({
+      OTP: verificationOTP,
+    });
+    if (!validOTP) {
+      throw new NotFoundException('Invalid OTP');
+    }
+
     const validToken = await this.emailVerificationModel.findOneAndDelete({
-      token: verificationToken,
+      token: validOTP.token,
       expiryDate: { $gte: new Date() },
     });
 
     if (!validToken) {
-      throw new UnauthorizedException('Invalid link');
+      throw new UnauthorizedException('Expired OTP. Get new OTP.');
     }
 
     const user = await this.userModel.findById(validToken.userId);
@@ -212,5 +228,45 @@ export class AuthService {
     user.isVerified = true;
     await user.save();
     return 'User verified successfully! Proceed to login.';
+  }
+
+  // Handle new verification requestion
+  async requestNewVerification(
+    requestionNewVerificationDto: RequestionNewVerificationDto,
+  ) {
+    const { email } = requestionNewVerificationDto;
+    const user = await this.userModel.findOne({ email: email });
+    if (!user) {
+      throw new NotFoundException('User not found!');
+    }
+
+    if (user.isVerified === true) {
+      return 'User already verified. Please login.';
+    } else {
+      // Delete any existing verification OTP for user
+      await this.emailVerificationModel.findOneAndDelete({
+        userId: user._id,
+      });
+
+      // Create new verification
+      const expiryDate = new Date();
+      expiryDate.setHours(expiryDate.getHours() + 1);
+      const verificationToken = nanoid(64);
+      const verificationOTP = crypto.randomInt(100000, 1000000).toString();
+      await this.emailVerificationModel.create({
+        OTP: verificationOTP,
+        token: verificationToken,
+        userId: user._id,
+        expiryDate,
+      });
+
+      // Send link to user by email
+      this.mailService.sendVerificationEmail(
+        email,
+        verificationOTP,
+        user.firstName,
+      );
+      return 'New OTP sent successfully.';
+    }
   }
 }
