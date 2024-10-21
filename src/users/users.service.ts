@@ -85,11 +85,11 @@ export class UsersService {
   async findAllUsers(queryUserDto: QueryUserDto): Promise<string | User[]> {
     const { page = 1, limit = 10 } = queryUserDto;
     const allUsers = await this.userModel
-      .find({})
-      .skip((+page - 1) * +limit)
-      .limit(+limit)
+      .find()
+      .select('-leases -purchases')
       .populate('properties')
-      .exec();
+      .skip((+page - 1) * +limit)
+      .limit(+limit);
 
     if (!allUsers) {
       throw new NotFoundException('Failed to fetch users!');
@@ -97,6 +97,7 @@ export class UsersService {
     if (allUsers.length === 0) {
       return 'User resource array is empty!';
     }
+
     return allUsers;
   }
 

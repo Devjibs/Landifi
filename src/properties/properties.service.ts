@@ -48,7 +48,10 @@ export class PropertiesService {
       .find()
       .skip((+page - 1) * +limit)
       .limit(+limit)
-      .populate('owner', '-updatedAt -isVerified -createdAt');
+      .populate(
+        'owner',
+        '-updatedAt -isVerified -createdAt -leases -purchases -properties',
+      );
 
     if (!allProperties) {
       throw new NotFoundException('Failed to fetch properties!');
@@ -62,7 +65,10 @@ export class PropertiesService {
   async findOne(propertyId: string) {
     const property = await this.propertyModel
       .findById(propertyId)
-      .populate('owner', '-updatedAt -isVerified -createdAt');
+      .populate(
+        'owner',
+        '-updatedAt -isVerified -createdAt -leases -purchases -properties',
+      );
     if (!property) {
       throw new NotFoundException('Property not found!');
     }
@@ -105,20 +111,31 @@ export class PropertiesService {
     return updatedProperty;
   }
 
-  async remove(propertyId: string, req) {
-    const deletedAnimal =
+  async remove(propertyId: string, req: CustomRequest) {
+    const { userId } = req;
+
+    const deletedProperty =
       await this.propertyModel.findByIdAndDelete(propertyId);
-    if (!deletedAnimal) {
-      throw new NotFoundException('Failed to delete property!');
+    if (!deletedProperty) {
+      throw new NotFoundException('Property not found!');
     }
+
+    await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $pull: { properties: deletedProperty._id.toString() } },
+        { new: true },
+      )
+      .exec();
+
     return 'Property deleted successfully';
   }
 
   async removeAll(userId: string) {
-    const deletedAnimals = await this.propertyModel.deleteMany({
+    const deletedProperties = await this.propertyModel.deleteMany({
       owner: userId,
     });
-    if (!deletedAnimals) {
+    if (!deletedProperties) {
       throw new NotFoundException('Failed to delete properties for the user!');
     }
     return 'All properties deleted successfully';

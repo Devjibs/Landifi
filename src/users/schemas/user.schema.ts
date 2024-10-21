@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, SchemaTypes } from 'mongoose';
+import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
 import { Role } from 'src/common/enums/role.enum';
 import { Lease } from 'src/leases/schemas/lease.schema';
 import { Property } from 'src/properties/schema/property.schema';
@@ -43,21 +43,21 @@ export class User {
 
   @Prop({
     required: false,
-    type: SchemaTypes.ObjectId,
+    type: [SchemaTypes.ObjectId],
     ref: 'Property',
   })
-  properties: [Property];
+  properties: Property[];
 
   @Prop({
     required: false,
-    type: SchemaTypes.ObjectId,
+    type: [SchemaTypes.ObjectId],
     ref: 'Lease',
   })
   leases: Lease[];
 
   @Prop({
     required: false,
-    type: SchemaTypes.ObjectId,
+    type: [SchemaTypes.ObjectId],
     ref: 'Sale',
   })
   purchases: Sale[];

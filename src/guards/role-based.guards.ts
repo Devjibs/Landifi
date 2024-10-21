@@ -6,12 +6,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
 import { ROLES_KEY } from 'src/decorators/roles.decorator';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
-export class AuthorizationGuard implements CanActivate {
+export class RoleBasedGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private userService: UsersService,
@@ -32,14 +31,10 @@ export class AuthorizationGuard implements CanActivate {
       const userPermissions = await this.userService.getUserPermission(
         request.userId,
       );
-      // for (const routePermission of routePermissions) {
       if (routePermissions.includes(userPermissions)) {
-        console.log('true');
         return true;
       } else {
-        console.log('false');
         return false;
-        // }
       }
     } catch (error) {
       throw new ForbiddenException();

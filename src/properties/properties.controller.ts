@@ -20,7 +20,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { PropertyParamsDto } from './dto/params-property.dto';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
-import { AuthorizationGuard } from 'src/guards/authorization.guards';
+import { RoleBasedGuard } from 'src/guards/role-based.guards';
 import { OwnershipGuard } from 'src/guards/Ownership.guards';
 import { CustomRequest } from 'src/common/interfaces/request.interface';
 import { QueryPropertyDto } from './dto/query-property.dto';
@@ -30,7 +30,7 @@ import { SearchPropertyDto } from './dto/search-property.dto';
 export class PropertiesController {
   constructor(private readonly propertiesService: PropertiesService) {}
 
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @UseGuards(AuthenticationGuard, RoleBasedGuard)
   @Post()
   @Roles(Role.LANDLORD, Role.ADMIN)
   @UseInterceptors(FileInterceptor('file'))
@@ -57,7 +57,7 @@ export class PropertiesController {
     return this.propertiesService.findOne(propertyParamsDto.id);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizationGuard, OwnershipGuard)
+  @UseGuards(AuthenticationGuard, RoleBasedGuard, OwnershipGuard)
   @Patch(':id')
   @Roles(Role.LANDLORD, Role.ADMIN)
   async update(
@@ -72,7 +72,7 @@ export class PropertiesController {
     );
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizationGuard, OwnershipGuard)
+  @UseGuards(AuthenticationGuard, RoleBasedGuard, OwnershipGuard)
   @Delete(':id')
   @Roles(Role.LANDLORD, Role.ADMIN)
   async remove(@Param() propertyParamsDto: PropertyParamsDto, @Req() req) {
