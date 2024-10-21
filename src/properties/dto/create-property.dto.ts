@@ -1,8 +1,9 @@
-import { IsArray, IsMongoId, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsNumber, IsString } from 'class-validator';
 import { PropertyType } from '../schema/property.schema';
 
 export class CreatePropertyDto {
   @IsString()
+  @IsEnum(PropertyType)
   type: PropertyType;
 
   @IsString()
@@ -13,8 +14,4 @@ export class CreatePropertyDto {
 
   @IsArray()
   amenities: string[];
-
-  // @IsString()
-  // @IsMongoId()
-  // owner: string;
 }

@@ -1,14 +1,19 @@
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsDefined,
   IsEmail,
   IsEnum,
+  IsOptional,
   IsString,
   Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
 import { Role } from 'src/common/enums/role.enum';
+import { Lease } from 'src/leases/schemas/lease.schema';
+import { Property } from 'src/properties/schema/property.schema';
+import { Sale } from 'src/sales/schemas/sale.schema';
 
 export class CreateUserDto {
   @IsEmail()
@@ -50,4 +55,16 @@ export class CreateUserDto {
   @Transform(({ value }) => value.toLowerCase().trim())
   @IsEnum(Role)
   userType: Role;
+
+  @IsArray()
+  @IsOptional()
+  properties: Property[];
+
+  @IsArray()
+  @IsOptional()
+  leases: Lease[];
+
+  @IsArray()
+  @IsOptional()
+  purchases: Sale[];
 }

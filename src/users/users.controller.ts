@@ -49,7 +49,7 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @Req() { userId },
   ) {
-    return this.usersService.updateUser(userParamsDto, userId, updateUserDto);
+    return this.usersService.updateUser(userParamsDto.id, userId, updateUserDto);
   }
 
   @UseGuards(AuthenticationGuard)

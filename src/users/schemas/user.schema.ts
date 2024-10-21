@@ -42,22 +42,25 @@ export class User {
   userType: Role;
 
   @Prop({
+    required: false,
     type: SchemaTypes.ObjectId,
     ref: 'Property',
   })
-  properties: Property;
+  properties: [Property];
 
   @Prop({
+    required: false,
     type: SchemaTypes.ObjectId,
     ref: 'Lease',
   })
-  leases: Lease;
+  leases: Lease[];
 
   @Prop({
+    required: false,
     type: SchemaTypes.ObjectId,
     ref: 'Sale',
   })
-  purchases: Sale;
+  purchases: Sale[];
 
   @Prop({ default: false })
   isVerified: boolean;

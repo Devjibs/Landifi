@@ -5,7 +5,7 @@ export class SearchPropertyDto {
   @IsOptional()
   landloard: string;
 
-  @IsEmail()
+  @IsString()
   @IsOptional()
   status: string;
 

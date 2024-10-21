@@ -1,6 +1,8 @@
 import {
   ConflictException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -19,11 +21,8 @@ import { UserParamsDto } from './dto/params-user.dto';
 import { MailService } from 'src/mail/mail.service';
 import { EmailVerificationToken } from 'src/auth/schema/verification-token.schema';
 import { nanoid } from 'nanoid';
-<<<<<<< HEAD
 import { PropertiesService } from 'src/properties/properties.service';
-=======
 import * as crypto from 'crypto';
->>>>>>> main
 
 @Injectable()
 export class UsersService {
@@ -34,6 +33,8 @@ export class UsersService {
     @InjectModel(EmailVerificationToken.name)
     private emailVerificationModel: Model<EmailVerificationToken>,
     private mailService: MailService,
+    // private propertiesService: PropertiesService,
+    @Inject(forwardRef(() => PropertiesService))
     private propertiesService: PropertiesService,
   ) {}
 
@@ -84,10 +85,11 @@ export class UsersService {
   async findAllUsers(queryUserDto: QueryUserDto): Promise<string | User[]> {
     const { page = 1, limit = 10 } = queryUserDto;
     const allUsers = await this.userModel
-      .find()
-
+      .find({})
       .skip((+page - 1) * +limit)
-      .limit(+limit);
+      .limit(+limit)
+      .populate('properties')
+      .exec();
 
     if (!allUsers) {
       throw new NotFoundException('Failed to fetch users!');
@@ -126,11 +128,11 @@ export class UsersService {
   }
 
   async updateUser(
-    userParamsDto: UserParamsDto,
+    userParamsId: string,
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    if (userParamsDto.id !== userId) {
+    if (userParamsId !== userId) {
       throw new ForbiddenException('You are not authorized');
     }
 
@@ -177,5 +179,21 @@ export class UsersService {
       throw new NotFoundException(`User not found!`);
     }
     return user.userType;
+  }
+
+  async updateLandlordProperty(landlordId: string, propertyId) {
+    console.log('I got here');
+    const landlord = await this.userModel.findById(landlordId);
+    landlord.properties = propertyId;
+    landlord.save();
+    console.log(landlord);
+
+    // await this.userModel.findOneAndUpdate(
+    //   { _id: landlordId },
+    //   {
+    //     $addToSet: { properties: propertyId },
+    //   },
+    //   { new: true },
+    // );
   }
 }

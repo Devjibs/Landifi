@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PropertiesService } from 'src/properties/properties.service';
 
@@ -16,10 +17,10 @@ export class OwnershipGuard implements CanActivate {
     const property = await this.propertiesService.findOne(params.id);
 
     if (!property) {
-      throw new ForbiddenException('Property not found!');
+      throw new NotFoundException('Property not found!');
     }
 
-    if (property.owner.toString() !== userId) {
+    if (property.owner._id.toString() !== userId) {
       throw new ForbiddenException('You do not have permission.');
     }
 

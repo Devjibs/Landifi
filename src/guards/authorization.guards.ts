@@ -32,12 +32,14 @@ export class AuthorizationGuard implements CanActivate {
       const userPermissions = await this.userService.getUserPermission(
         request.userId,
       );
-      for (const routePermission of routePermissions) {
-        if (routePermission == userPermissions) {
-          return true;
-        } else {
-          return false;
-        }
+      // for (const routePermission of routePermissions) {
+      if (routePermissions.includes(userPermissions)) {
+        console.log('true');
+        return true;
+      } else {
+        console.log('false');
+        return false;
+        // }
       }
     } catch (error) {
       throw new ForbiddenException();

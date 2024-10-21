@@ -10,6 +10,7 @@ import {
   UseGuards,
   UploadedFile,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -22,12 +23,14 @@ import { Role } from 'src/common/enums/role.enum';
 import { AuthorizationGuard } from 'src/guards/authorization.guards';
 import { OwnershipGuard } from 'src/guards/Ownership.guards';
 import { CustomRequest } from 'src/common/interfaces/request.interface';
+import { QueryPropertyDto } from './dto/query-property.dto';
+import { SearchPropertyDto } from './dto/search-property.dto';
 
 @Controller('properties')
 export class PropertiesController {
   constructor(private readonly propertiesService: PropertiesService) {}
 
-  @UseGuards(AuthenticationGuard, AuthorizationGuard, OwnershipGuard)
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @Post()
   @Roles(Role.LANDLORD, Role.ADMIN)
   @UseInterceptors(FileInterceptor('file'))
@@ -40,8 +43,13 @@ export class PropertiesController {
   }
 
   @Get()
-  async findAll() {
-    return this.propertiesService.findAll();
+  async findAll(@Query() queryPropertyDto: QueryPropertyDto) {
+    return this.propertiesService.findAll(queryPropertyDto);
+  }
+
+  @Get('search')
+  async searchProperty(@Query() searchPropertyDto: SearchPropertyDto) {
+    return this.propertiesService.searchProperty(searchPropertyDto);
   }
 
   @Get(':id')
