@@ -7,3 +7,5 @@ export type SaleDocument = HydratedDocument<Sale>;
 export class Sale {}
 
 export const SaleSchema = SchemaFactory.createForClass(Sale);
+
+export const SALEMODEL = Sale.name;

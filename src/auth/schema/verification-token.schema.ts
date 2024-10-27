@@ -19,3 +19,5 @@ export class EmailVerificationToken extends Document {
 export const EmailVerificationTokenSchema = SchemaFactory.createForClass(
   EmailVerificationToken,
 );
+
+export const EMAILVERIFICATIONTOKENMODEL = EmailVerificationToken.name;

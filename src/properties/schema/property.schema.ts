@@ -1,10 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
-
-export enum PropertyType {
-  RENT = 'rent',
-  SALE = 'sale',
-}
+import { PropertyType } from 'src/common/enums/index.enum';
+import { ImageType } from 'src/common/types/index.type';
 
 export type PropertyDocument = HydratedDocument<Property>;
 
@@ -32,6 +29,11 @@ export class Property {
   amenities: string[];
 
   @Prop({
+    required: false,
+  })
+  images: ImageType[];
+
+  @Prop({
     required: true,
     type: SchemaTypes.ObjectId,
     ref: 'User',
@@ -40,3 +42,5 @@ export class Property {
 }
 
 export const PropertySchema = SchemaFactory.createForClass(Property);
+
+export const PROPERTYMODEL = Property.name;

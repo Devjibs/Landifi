@@ -11,28 +11,34 @@ import * as crypto from 'crypto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from 'src/users/schemas/user.schema';
+import { User, USER_MODEL, UserDocument } from 'src/users/schemas/user.schema';
 import { Model } from 'mongoose';
-import { RefreshToken } from './schema/referesh-token.schema';
+import {
+  RefreshToken,
+  REFRESHTOKENMODEL,
+} from './schema/referesh-token.schema';
 import { RefreshTokenDto } from './dto/refresh-tokens.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetToken } from './schema/reset-token.schema';
-import { MailService } from 'src/mail/mail.service';
-import { EmailVerificationToken } from './schema/verification-token.schema';
+import { ResetToken, RESETTOKENMODEL } from './schema/reset-token.schema';
+import { MailService } from 'src/common/mail/mail.service';
+import {
+  EmailVerificationToken,
+  EMAILVERIFICATIONTOKENMODEL,
+} from './schema/verification-token.schema';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { RequestionNewVerificationDto } from './dto/request-new-verification.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-    @InjectModel(RefreshToken.name)
+    @InjectModel(USER_MODEL) private userModel: Model<UserDocument>,
+    @InjectModel(REFRESHTOKENMODEL)
     private refreshTokenModel: Model<RefreshToken>,
-    @InjectModel(ResetToken.name)
+    @InjectModel(RESETTOKENMODEL)
     private resetTokenModel: Model<ResetToken>,
-    @InjectModel(EmailVerificationToken.name)
+    @InjectModel(EMAILVERIFICATIONTOKENMODEL)
     private emailVerificationModel: Model<EmailVerificationToken>,
     private mailService: MailService,
     private jwtService: JwtService,
@@ -50,65 +56,89 @@ export class AuthService {
       throw new UnauthorizedException('Wrong credentials!');
     }
 
-    if (user.isVerified === false) {
+    if (user.isVerified) {
+      // Generate JWT tokens
+      const tokens = await this.generateUserTokens(user._id.toString());
+      return {
+        ...tokens,
+        userId: user._id,
+      };
+    } else {
       // Generate and send new email verification link
-      const existingEmailVerification =
-        await this.emailVerificationModel.findOne({ userId: user._id });
+      await this.emailVerificationModel.findOneAndDelete({
+        userId: user._id,
+        expiryDate: { $gte: new Date() },
+      });
 
-      if (
-        !existingEmailVerification ||
-        existingEmailVerification.expiryDate >= new Date()
-      ) {
-        await this.emailVerificationModel.findOneAndDelete({
-          userId: user._id,
-        });
+      // Create verification
+      const expiryDate = new Date();
+      expiryDate.setHours(expiryDate.getHours() + 1);
+      const verificationToken = nanoid(64);
+      const verificationOTP = crypto.randomInt(100000, 1000000).toString();
+      await this.emailVerificationModel.create({
+        OTP: verificationOTP,
+        token: verificationToken,
+        userId: user._id,
+        expiryDate,
+      });
 
-        // Create verification
-        const expiryDate = new Date();
-        expiryDate.setHours(expiryDate.getHours() + 1);
-        const verificationToken = nanoid(64);
-        const verificationOTP = crypto.randomInt(100000, 1000000).toString();
-        await this.emailVerificationModel.create({
-          OTP: verificationOTP,
-          token: verificationToken,
-          userId: user._id,
-          expiryDate,
-        });
+      // Send link to user by email
+      this.mailService.sendVerificationEmail(
+        email,
+        verificationOTP,
+        user.firstName,
+      );
 
-        // Send link to user by email
-        this.mailService.sendVerificationEmail(
-          email,
-          verificationOTP,
-          user.firstName,
-        );
-        return 'User not verified! Please verify your email to continue.';
-      }
+      throw new UnauthorizedException(
+        `User with email: ${user.email} not verified! Please verify your email to continue.`,
+      );
     }
-
-    // Generate JWT tokens
-    const tokens = await this.generateUserTokens(user._id);
-    return {
-      ...tokens,
-      userId: user._id,
-    };
   }
 
   // Handles regenration of new refresh token attending to request from frontend
+  // async refreshTokens(refreshTokenData: RefreshTokenDto) {
+  //   const token = await this.refreshTokenModel.findOne({
+  //     token: refreshTokenData.refreshToken,
+  //   });
+
+  //   if (!token) {
+  //     throw new UnauthorizedException('Refresh token is invalid!');
+  //   }
+
+  //   const validToken = token.expiryDate > new Date();
+
+  //   if (!validToken) {
+  //     await this.resetTokenModel.findByIdAndDelete(token._id);
+  //     throw new UnauthorizedException('Refresh token expired!');
+  //   }
+
+  //   return this.generateUserTokens(token.userId);
+  // }
   async refreshTokens(refreshTokenData: RefreshTokenDto) {
-    // TODO: Ensures if refresh token has expired, prompt user to login instead of generating new refresh token
+    // Find the refresh token in the database
     const token = await this.refreshTokenModel.findOne({
       token: refreshTokenData.refreshToken,
-      expiryDate: { $gte: new Date() },
     });
 
+    // If token is not found, return unauthorized
     if (!token) {
       throw new UnauthorizedException('Refresh token is invalid!');
     }
 
-    return this.generateUserTokens(token.userId);
+    // Check if token is expired
+    const isTokenExpired = token.expiryDate <= new Date();
+    
+    if (isTokenExpired) {
+      // Delete expired refresh token from the database
+      await this.refreshTokenModel.findByIdAndDelete(token._id);
+      throw new UnauthorizedException('Refresh token expired!');
+    }
+
+    // Generate and return new access token
+    return this.generateUserTokens(token.userId.toString());
   }
 
-  async generateUserTokens(userId) {
+  async generateUserTokens(userId: string) {
     const payload = { sub: userId };
     const accessToken = await this.jwtService.signAsync(payload);
     const refreshToken = uuidv4();
@@ -147,7 +177,7 @@ export class AuthService {
     const newHashedPassword = await bcryptjs.hash(newPassword, 10);
     user.password = newHashedPassword;
     await user.save();
-    return 'Password changed successfully.';
+    return `Password for ${user.email} changed successfully.`;
   }
 
   async forgotPassword(forgotPasswordData: ForgotPasswordDto) {
@@ -199,7 +229,7 @@ export class AuthService {
     const newHashedPassword = await bcryptjs.hash(newPassword, 10);
     user.password = newHashedPassword;
     await user.save();
-    return 'Password changed successfully!';
+    return `Password for ${user.email} changed successfully.`;
   }
 
   // Handles email verificaiton
@@ -227,7 +257,7 @@ export class AuthService {
     }
     user.isVerified = true;
     await user.save();
-    return 'User verified successfully! Proceed to login.';
+    return `User with email: ${user.email} verified successfully! Proceed to login.`;
   }
 
   // Handle new verification requestion
@@ -235,13 +265,13 @@ export class AuthService {
     requestionNewVerificationDto: RequestionNewVerificationDto,
   ) {
     const { email } = requestionNewVerificationDto;
-    const user = await this.userModel.findOne({ email: email });
+    const user = await this.userModel.findOne({ email });
     if (!user) {
       throw new NotFoundException('User not found!');
     }
 
     if (user.isVerified === true) {
-      return 'User already verified. Please login.';
+      return `User with email: ${user.email} already verified. Please login.`;
     } else {
       // Delete any existing verification OTP for user
       await this.emailVerificationModel.findOneAndDelete({
@@ -266,7 +296,7 @@ export class AuthService {
         verificationOTP,
         user.firstName,
       );
-      return 'New OTP sent successfully.';
+      return 'If this user exists, they will receive a new OTP via email.';
     }
   }
 }

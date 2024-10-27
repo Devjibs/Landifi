@@ -1,86 +1,82 @@
 import {
-  ConflictException,
   ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './schemas/user.schema';
+import { User, USER_MODEL } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as bcryptjs from 'bcryptjs';
 import { QueryUserDto } from './dto/query-user.dto';
 import { SearchUserDto } from './dto/search-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { RefreshToken } from 'src/auth/schema/referesh-token.schema';
+import {
+  RefreshToken,
+  REFRESHTOKENMODEL,
+} from 'src/auth/schema/referesh-token.schema';
 import { UserParamsDto } from './dto/params-user.dto';
-import { MailService } from 'src/mail/mail.service';
-import { EmailVerificationToken } from 'src/auth/schema/verification-token.schema';
-import { nanoid } from 'nanoid';
+import { MailService } from 'src/common/mail/mail.service';
+import {
+  EmailVerificationToken,
+  EMAILVERIFICATIONTOKENMODEL,
+} from 'src/auth/schema/verification-token.schema';
 import { PropertiesService } from 'src/properties/properties.service';
-import * as crypto from 'crypto';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-    @InjectModel(RefreshToken.name)
+    @InjectModel(USER_MODEL) private userModel: Model<User>,
+    @InjectModel(REFRESHTOKENMODEL)
     private refreshTokenModel: Model<RefreshToken>,
-    @InjectModel(EmailVerificationToken.name)
-    private emailVerificationModel: Model<EmailVerificationToken>,
-    private mailService: MailService,
-    // private propertiesService: PropertiesService,
+    @InjectModel(EMAILVERIFICATIONTOKENMODEL)
     @Inject(forwardRef(() => PropertiesService))
     private propertiesService: PropertiesService,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<string | User> {
-    const { email, firstName, lastName, password, userType } = createUserDto;
-    const existingUser = await this.userModel.findOne({ email: email });
-    if (existingUser) {
-      throw new ConflictException('User already exists!');
-    }
-    const saltOrRounds = 15;
-    const hashedPassword = bcryptjs.hashSync(password, saltOrRounds);
-    const newUser = await this.userModel.create({
-      email,
-      password: hashedPassword,
-      firstName,
-      lastName,
-      userType,
-    });
+  // async createUser(createUserDto: CreateUserDto): Promise<string | User> {
+  //   const { email, firstName, lastName, password, userType } = createUserDto;
+  //   const existingUser = await this.userModel.findOne({ email: email });
+  //   if (existingUser) {
+  //     throw new ConflictException('User already exists!');
+  //   }
+  //   const saltOrRounds = 15;
+  //   const hashedPassword = bcryptjs.hashSync(password, saltOrRounds);
+  //   const newUser = await this.userModel.create({
+  //     email,
+  //     password: hashedPassword,
+  //     firstName,
+  //     lastName,
+  //     userType,
+  //   });
 
-    if (!newUser) {
-      throw new InternalServerErrorException('Failed to create user!');
-    }
+  //   if (!newUser) {
+  //     throw new InternalServerErrorException('Failed to create user!');
+  //   }
 
-    const newUserObject = newUser.toObject();
+  //   const newUserObject = newUser.toObject();
 
-    // Generate email verification link
-    const expiryDate = new Date();
-    expiryDate.setHours(expiryDate.getHours() + 1);
-    const verificationToken = nanoid(64);
-    const verificationOTP = crypto.randomInt(100000, 1000000).toString();
-    await this.emailVerificationModel.create({
-      OTP: verificationOTP,
-      token: verificationToken,
-      userId: newUserObject._id,
-      expiryDate,
-    });
+  //   // Generate email verification link
+  //   const expiryDate = new Date();
+  //   expiryDate.setHours(expiryDate.getHours() + 1);
+  //   const verificationToken = nanoid(64);
+  //   const verificationOTP = crypto.randomInt(100000, 1000000).toString();
+  //   await this.emailVerificationModel.create({
+  //     OTP: verificationOTP,
+  //     token: verificationToken,
+  //     userId: newUserObject._id,
+  //     expiryDate,
+  //   });
 
-    // Send link to user by email
-    this.mailService.sendVerificationEmail(
-      email,
-      verificationOTP,
-      newUserObject.firstName,
-    );
+  //   // Send link to user by email
+  //   this.mailService.sendVerificationEmail(
+  //     email,
+  //     verificationOTP,
+  //     newUserObject.firstName,
+  //   );
 
-    return 'Account created successfully. Please check your email to proceed.';
-  }
+  //   return `Account created successfully. A token has been sent to ${email} and will expire in 1 hour time.`;
+  // }
 
   async findAllUsers(queryUserDto: QueryUserDto): Promise<string | User[]> {
     const { page = 1, limit = 10 } = queryUserDto;
@@ -120,7 +116,14 @@ export class UsersService {
     return users;
   }
 
-  async findUserById(userId: string): Promise<User> {
+  async findUserById(
+    userParamsDto: UserParamsDto,
+    userId: string,
+  ): Promise<User> {
+    if (userParamsDto.id !== userId) {
+      throw new ForbiddenException('You are not authorized');
+    }
+
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException(`User with the specified ID not found!`);
@@ -171,7 +174,7 @@ export class UsersService {
     // Delete all property by the user
     await this.propertiesService.removeAll(deletedUser._id.toString());
 
-    return `User deleted successfully!`;
+    return `User with the email: ${deletedUser.email} deleted successfully!`;
   }
 
   async getUserPermission(userId: string) {
@@ -182,19 +185,22 @@ export class UsersService {
     return user.userType;
   }
 
-  async updateLandlordProperty(landlordId: string, propertyId) {
-    console.log('I got here');
-    const landlord = await this.userModel.findById(landlordId);
-    landlord.properties = propertyId;
-    landlord.save();
-    console.log(landlord);
+  // Delete later if not useful
+  // async updateLandlordProperty(landlordId: string, propertyId) {
+  //   const landlord = await this.userModel.findOne({
+  //     _id: landlordId,
+  //     userType: 'landlord',
+  //   });
+  //   const {} = landlord
+  //   landlord.properties = propertyId;
+  //   landlord.save();
 
-    // await this.userModel.findOneAndUpdate(
-    //   { _id: landlordId },
-    //   {
-    //     $addToSet: { properties: propertyId },
-    //   },
-    //   { new: true },
-    // );
-  }
+  // await this.userModel.findOneAndUpdate(
+  //   { _id: landlordId },
+  //   {
+  //     $addToSet: { properties: propertyId },
+  //   },
+  //   { new: true },
+  // );
+  // }
 }

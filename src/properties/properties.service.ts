@@ -1,6 +1,4 @@
 import {
-  forwardRef,
-  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -8,33 +6,45 @@ import {
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Property } from './schema/property.schema';
+import { Property, PROPERTYMODEL } from './schema/property.schema';
 import { Model } from 'mongoose';
 import { CustomRequest } from 'src/common/interfaces/request.interface';
 import { QueryPropertyDto } from './dto/query-property.dto';
 import { SearchPropertyDto } from './dto/search-property.dto';
-import { UsersService } from 'src/users/users.service';
-import { User } from 'src/users/schemas/user.schema';
+import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
+import {
+  LANDLORD_MODEL,
+  LandlordDocument,
+} from 'src/landlords/schemas/landlord.schema';
 
 @Injectable()
 export class PropertiesService {
   constructor(
-    @InjectModel(Property.name) private propertyModel: Model<Property>,
-    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(PROPERTYMODEL) private propertyModel: Model<Property>,
+    @InjectModel(LANDLORD_MODEL) private landlordModel: Model<LandlordDocument>,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(createPropertyDto: CreatePropertyDto, req: CustomRequest) {
+  async create(
+    createPropertyDto: CreatePropertyDto,
+    images: Array<Express.Multer.File>,
+    req: CustomRequest,
+  ) {
+    const propertyImagesArray =
+      await this.cloudinaryService.uploadMultiplePropertyImages(images);
+
     const { userId } = req;
     const newProperty = new this.propertyModel({
       ...createPropertyDto,
+      images: propertyImagesArray,
       owner: userId,
     });
     const savedProperty = await newProperty.save();
     if (!savedProperty) {
       throw new InternalServerErrorException('Failed to create new property!');
     }
-    await this.userModel.findByIdAndUpdate(
-      userId,
+    await this.landlordModel.findOneAndUpdate(
+      { _id: userId, userType: 'landlord' },
       { $push: { properties: savedProperty._id } },
       { new: true },
     );
@@ -120,7 +130,7 @@ export class PropertiesService {
       throw new NotFoundException('Property not found!');
     }
 
-    await this.userModel
+    await this.landlordModel
       .findByIdAndUpdate(
         userId,
         { $pull: { properties: deletedProperty._id.toString() } },

@@ -3,3 +3,9 @@ export enum Role {
   TENANT = 'tenant',
   ADMIN = 'admin',
 }
+
+
+export enum PropertyType {
+  RENT = 'rent',
+  SALE = 'sale',
+}

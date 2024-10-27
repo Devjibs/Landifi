@@ -7,3 +7,5 @@ export type LeaseDocument = HydratedDocument<Lease>;
 export class Lease {}
 
 export const LeaseSchema = SchemaFactory.createForClass(Lease);
+
+export const LEASEMODEL = Lease.name;

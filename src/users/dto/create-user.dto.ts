@@ -10,7 +10,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Role } from 'src/common/enums/role.enum';
+import { Role } from 'src/common/enums/index.enum';
 import { Lease } from 'src/leases/schemas/lease.schema';
 import { Property } from 'src/properties/schema/property.schema';
 import { Sale } from 'src/sales/schemas/sale.schema';

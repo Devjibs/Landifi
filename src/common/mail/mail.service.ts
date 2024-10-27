@@ -59,4 +59,8 @@ export class MailService {
 
     await this.transporter.sendMail(mailOptions);
   }
+
+  // TODO: Send email to landlords
+
+  // TODO: Send email to tenants
 }

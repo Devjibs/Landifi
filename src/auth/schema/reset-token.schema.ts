@@ -17,3 +17,5 @@ export class ResetToken extends Document {
 }
 
 export const ResetTokenSchema = SchemaFactory.createForClass(ResetToken);
+
+export const RESETTOKENMODEL = ResetToken.name;

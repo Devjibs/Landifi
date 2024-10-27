@@ -14,3 +14,5 @@ export class RefreshToken extends Document {
 }
 
 export const RefreshTokenSchema = SchemaFactory.createForClass(RefreshToken);
+
+export const REFRESHTOKENMODEL = RefreshToken.name;

@@ -1,13 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
-import { Role } from 'src/common/enums/role.enum';
-import { Lease } from 'src/leases/schemas/lease.schema';
-import { Property } from 'src/properties/schema/property.schema';
-import { Sale } from 'src/sales/schemas/sale.schema';
+import { HydratedDocument, Types } from 'mongoose';
+import { Role } from 'src/common/enums/index.enum';
 
-export type UserDocument = HydratedDocument<User>;
+// export type UserDocument = HydratedDocument<User>;
 
-@Schema({ timestamps: true, versionKey: false })
+@Schema({ discriminatorKey: 'userKind', timestamps: true, versionKey: false })
 export class User {
   @Prop({
     required: true,
@@ -36,37 +33,22 @@ export class User {
   lastName: string;
 
   @Prop({
+    type: String,
     required: true,
+    immutable: true,
     enum: Role,
   })
-  userType: Role;
-
-  @Prop({
-    required: false,
-    type: [SchemaTypes.ObjectId],
-    ref: 'Property',
-  })
-  properties: Property[];
-
-  @Prop({
-    required: false,
-    type: [SchemaTypes.ObjectId],
-    ref: 'Lease',
-  })
-  leases: Lease[];
-
-  @Prop({
-    required: false,
-    type: [SchemaTypes.ObjectId],
-    ref: 'Sale',
-  })
-  purchases: Sale[];
+  userType: string;
 
   @Prop({ default: false })
   isVerified: boolean;
 }
 
+export type UserDocument = User & Document;
+
 export const UserSchema = SchemaFactory.createForClass(User);
+
+export const USER_MODEL = User.name;
 
 //  Remove sensitive data from response object globally
 UserSchema.methods.toJSON = function () {

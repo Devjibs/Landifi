@@ -27,14 +27,18 @@ export class AuthController {
     return this.authService.loginUser(loginUserDto);
   }
 
-  @Post('emailverification')
+  @Post('email-verification')
   async emailVerification(@Body() verifyEmailDto: VerifyEmailDto) {
     return this.authService.emailVerification(verifyEmailDto);
   }
 
   @Post('new-verification-request')
-  async requestNewVerification(@Body() requestionNewVerificationDto: RequestionNewVerificationDto) {
-    return this.authService.requestNewVerification(requestionNewVerificationDto);
+  async requestNewVerification(
+    @Body() requestionNewVerificationDto: RequestionNewVerificationDto,
+  ) {
+    return this.authService.requestNewVerification(
+      requestionNewVerificationDto,
+    );
   }
 
   @Post('refresh-token')

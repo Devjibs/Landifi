@@ -8,19 +8,21 @@ import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from './http-exception/http-exception.filter';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { MailModule } from './mail/mail.module';
+import { MailModule } from './common/mail/mail.module';
 import { PropertiesModule } from './properties/properties.module';
 import config from './config/config';
-import { ImageUploaderService } from './common/image-uploader.service';
 import { LeasesModule } from './leases/leases.module';
 import { SalesModule } from './sales/sales.module';
 import { LandlordsModule } from './landlords/landlords.module';
 import { TenantsModule } from './tenants/tenants.module';
+import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
+import { MongooseSchemasModule } from './common/mongoose/mongoose-schemas.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
     MongooseModule.forRoot(process.env.DATABASE_URL),
+    MongooseSchemasModule,
     UsersModule,
     AuthModule,
     MailModule,
@@ -29,6 +31,7 @@ import { TenantsModule } from './tenants/tenants.module';
     SalesModule,
     LandlordsModule,
     TenantsModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [
@@ -38,7 +41,6 @@ import { TenantsModule } from './tenants/tenants.module';
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
     },
-    ImageUploaderService,
   ],
 })
 export class AppModule {

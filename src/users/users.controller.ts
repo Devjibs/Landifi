@@ -11,7 +11,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { SearchUserDto } from './dto/search-user.dto';
 import { UserParamsDto } from './dto/params-user.dto';
@@ -21,11 +20,6 @@ import { AuthenticationGuard } from 'src/guards/authentication.guard';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.createUser(createUserDto);
-  }
 
   @Get()
   async findAllUsers(@Query() queryUserDto: QueryUserDto) {
@@ -37,9 +31,10 @@ export class UsersController {
     return this.usersService.searchUser(searchUserDto);
   }
 
+  @UseGuards(AuthenticationGuard)
   @Get(':id')
-  async findUserById(@Param() userParamsDto: UserParamsDto) {
-    return this.usersService.findUserById(userParamsDto.id);
+  async findUserById(@Param() userParamsDto: UserParamsDto, @Req() { userId }) {
+    return this.usersService.findUserById(userParamsDto, userId);
   }
 
   @UseGuards(AuthenticationGuard)
@@ -49,7 +44,11 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @Req() { userId },
   ) {
-    return this.usersService.updateUser(userParamsDto.id, userId, updateUserDto);
+    return this.usersService.updateUser(
+      userParamsDto.id,
+      userId,
+      updateUserDto,
+    );
   }
 
   @UseGuards(AuthenticationGuard)
