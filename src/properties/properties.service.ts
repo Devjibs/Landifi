@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -30,10 +32,27 @@ export class PropertiesService {
     images: Array<Express.Multer.File>,
     req: CustomRequest,
   ) {
+    const { userId } = req;
+
+    if (images.length === 0) {
+      throw new BadRequestException(
+        'Image upload is required to create new property',
+      );
+    }
+
+    if (images.length > 5) {
+      throw new BadRequestException(
+        'You can only upload maximum of 5 images per property!',
+      );
+    }
+
     const propertyImagesArray =
       await this.cloudinaryService.uploadMultiplePropertyImages(images);
 
-    const { userId } = req;
+    if (propertyImagesArray.length === 0) {
+      throw new ConflictException('Failed to upload property images!');
+    }
+
     const newProperty = new this.propertyModel({
       ...createPropertyDto,
       images: propertyImagesArray,

@@ -26,8 +26,7 @@ import {
 import { nanoid } from 'nanoid';
 import * as crypto from 'crypto';
 import { SALTORROUND } from 'src/constants/index.contant';
-import { UserParamsDto } from 'src/users/dto/params-user.dto';
-import { User, USER_MODEL, UserDocument } from 'src/users/schemas/user.schema';
+import { USER_MODEL, UserDocument } from 'src/users/schemas/user.schema';
 import { LandlordParamsDto } from './dto/params-landlord.dto';
 import { UpdateLandlordDto } from './dto/update-landlord.dto';
 import { PropertiesService } from 'src/properties/properties.service';
