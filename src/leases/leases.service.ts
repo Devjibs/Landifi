@@ -45,7 +45,10 @@ export class LeasesService {
     }
 
     const propertyImagesArray =
-      await this.cloudinaryService.uploadMultiplePropertyImages(images);
+      await this.cloudinaryService.uploadMultipleImages(
+        images,
+        'properties',
+      );
 
     if (propertyImagesArray.length === 0) {
       throw new ConflictException('Failed to upload property images!');

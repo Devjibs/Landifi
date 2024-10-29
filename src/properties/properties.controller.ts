@@ -1,28 +1,22 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
   Delete,
   Req,
   UseGuards,
-  UseInterceptors,
   Query,
-  UploadedFiles,
 } from '@nestjs/common';
 import { PropertiesService } from './properties.service';
-import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { AuthenticationGuard } from 'src/guards/authentication.guard';
-import { FilesInterceptor } from '@nestjs/platform-express';
 import { PropertyParamsDto } from './dto/params-property.dto';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/common/enums/index.enum';
 import { RoleBasedGuard } from 'src/guards/role-based.guards';
 import { OwnershipGuard } from 'src/guards/Ownership.guards';
-import { CustomRequest } from 'src/common/interfaces/request.interface';
 import { QueryPropertyDto } from './dto/query-property.dto';
 import { SearchPropertyDto } from './dto/search-property.dto';
 

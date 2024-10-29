@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { CreatePropertyDto } from './dto/create-property.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Property, PROPERTYMODEL } from './schema/property.schema';
@@ -18,7 +11,7 @@ import {
   LANDLORD_MODEL,
   LandlordDocument,
 } from 'src/landlords/schemas/landlord.schema';
-import { Role } from 'src/common/enums/index.enum';
+import { ImageType } from 'src/common/types/index.type';
 
 @Injectable()
 export class PropertiesService {
@@ -106,8 +99,25 @@ export class PropertiesService {
   async remove(propertyId: string, req: CustomRequest) {
     const { userId } = req;
 
-    const deletedProperty =
-      await this.propertyModel.findByIdAndDelete(propertyId);
+    const propertyToBeDeleted = await this.propertyModel.findOne({
+      _id: propertyId,
+      landlord: userId,
+    });
+
+    // Extract the images array from the property to be deleted
+    const { images } = propertyToBeDeleted;
+
+    // Extract the images public_id
+    const imagesIdArr = images.map((img: ImageType) => img.public_id);
+
+    // Delete all the images with their IDs
+    await this.cloudinaryService.deleteMultipleImages(imagesIdArr);
+
+    const deletedProperty = await this.propertyModel.findOneAndDelete({
+      _id: propertyId,
+      landlord: userId,
+    });
+
     if (!deletedProperty) {
       throw new NotFoundException('Property not found!');
     }

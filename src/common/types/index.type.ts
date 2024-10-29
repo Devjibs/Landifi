@@ -1,4 +1,9 @@
+// export type ImageType = {
+//   imageId: string;
+//   imageUrl: string;
+// };
+
 export type ImageType = {
-  imageId: string;
-  imageUrl: string;
+  secure_url: string;
+  public_id: string;
 };
