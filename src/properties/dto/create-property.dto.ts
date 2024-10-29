@@ -9,8 +9,10 @@ import {
 export class CreatePropertyDto {
   @IsString()
   @Transform(({ value }) => {
-    value[0].toUpperCase() + value.slice(1);
-    value.trim();
+    const trimmedValue = value.trim();
+    const transformedValue =
+      trimmedValue[0].toUpperCase() + trimmedValue.slice(1);
+    return transformedValue;
   })
   title: string;
 

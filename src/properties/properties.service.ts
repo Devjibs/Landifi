@@ -28,49 +28,6 @@ export class PropertiesService {
     private cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(
-    createPropertyDto: CreatePropertyDto,
-    images: Array<Express.Multer.File>,
-    req: CustomRequest,
-  ) {
-    const { userId } = req;
-
-    if (images.length === 0) {
-      throw new BadRequestException(
-        'Image upload is required to create new property',
-      );
-    }
-
-    if (images.length > 5) {
-      throw new BadRequestException(
-        'You can only upload maximum of 5 images per property!',
-      );
-    }
-
-    const propertyImagesArray =
-      await this.cloudinaryService.uploadMultiplePropertyImages(images);
-
-    if (propertyImagesArray.length === 0) {
-      throw new ConflictException('Failed to upload property images!');
-    }
-
-    const newProperty = new this.propertyModel({
-      ...createPropertyDto,
-      images: propertyImagesArray,
-      landlord: userId,
-    });
-    const savedProperty = await newProperty.save();
-    if (!savedProperty) {
-      throw new InternalServerErrorException('Failed to create new property!');
-    }
-    await this.landlordModel.findOneAndUpdate(
-      { _id: userId, userType: Role.LANDLORD },
-      { $push: { properties: savedProperty._id } },
-      { new: true },
-    );
-    return savedProperty;
-  }
-
   async findAll(queryPropertyDto: QueryPropertyDto) {
     const { page = 1, limit = 20 } = queryPropertyDto;
 

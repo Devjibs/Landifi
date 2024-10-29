@@ -30,20 +30,6 @@ import { SearchPropertyDto } from './dto/search-property.dto';
 export class PropertiesController {
   constructor(private readonly propertiesService: PropertiesService) {}
 
-  @UseGuards(AuthenticationGuard, RoleBasedGuard)
-  @Post()
-  @Roles(Role.LANDLORD)
-  @UseInterceptors(FilesInterceptor('images', 5))
-  async create(
-    @Body() createPropertyDto: CreatePropertyDto,
-    @Req() req: CustomRequest,
-    @UploadedFiles()
-    images // new ParseFilePipe({ validators: [new FileValidationPipe()] }),
-    : Array<Express.Multer.File>,
-  ) {
-    return this.propertiesService.create(createPropertyDto, images, req);
-  }
-
   @Get()
   async findAll(@Query() queryPropertyDto: QueryPropertyDto) {
     return this.propertiesService.findAll(queryPropertyDto);
