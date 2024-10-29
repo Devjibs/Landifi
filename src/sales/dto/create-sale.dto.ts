@@ -8,6 +8,7 @@ export class CreateSaleDto extends CreatePropertyDto {
   salePrice: number;
 
   @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   @IsOptional()
   isNegotiable: boolean;
 

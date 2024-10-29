@@ -17,6 +17,6 @@ export enum PropertyCategory {
 
 export enum PropertyStatus {
   AVAILABLE = 'Available',
-  RENTED = 'Rented',
+  RENTED = 'Leased',
   SOLD = 'Sold',
 }

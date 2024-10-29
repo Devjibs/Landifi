@@ -31,6 +31,7 @@ export class CreateLeaseDto extends CreatePropertyDto {
   leaseEndDate: string;
 
   @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   @IsOptional()
   isFurnished: boolean;
 }
