@@ -71,6 +71,19 @@ export class CloudinaryService {
   }
 
   // Single property image upload
+  async deletePropertyImage(publicId: string): Promise<void> {
+    await cloudinary.uploader.destroy(publicId);
+  }
+
+  // Multiple images upload for properties
+  async deleteMultiplePropertyImage(publicIdArr: string[]): Promise<void> {
+    const deletePromises = publicIdArr.map((id) =>
+      this.deletePropertyImage(id),
+    );
+    Promise.all(deletePromises);
+  }
+
+  // Single property image upload
   async uploadUserImage(file: Express.Multer.File): Promise<ImageData> {
     return new Promise((resolve, reject) => {
       const upload = cloudinary.uploader.upload_stream(

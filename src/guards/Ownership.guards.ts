@@ -20,7 +20,7 @@ export class OwnershipGuard implements CanActivate {
       throw new NotFoundException('Property not found!');
     }
 
-    if (property.owner._id.toString() !== userId) {
+    if (property.landlord._id.toString() !== userId) {
       throw new ForbiddenException('You do not have permission.');
     }
 

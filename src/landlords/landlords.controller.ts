@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -17,6 +18,7 @@ import { RoleBasedGuard } from 'src/guards/role-based.guards';
 import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/common/enums/index.enum';
 import { UpdateLandlordDto } from './dto/update-landlord.dto';
+import { QueryPropertyDto } from 'src/properties/dto/query-property.dto';
 
 @Controller('landlords')
 export class LandlordsController {
@@ -25,6 +27,19 @@ export class LandlordsController {
   @Post()
   create(@Body() createLandlordDto: CreateLandlordDto) {
     return this.landlordsService.createLandlord(createLandlordDto);
+  }
+
+  @UseGuards(AuthenticationGuard, RoleBasedGuard)
+  @Roles(Role.LANDLORD)
+  @Get('allproperties')
+  async findAllPropertiesForLandlord(
+    @Query() queryPropertyDto: QueryPropertyDto,
+    @Req() { userId },
+  ) {
+    return this.landlordsService.findAllPropertiesForLandlord(
+      queryPropertyDto,
+      userId,
+    );
   }
 
   @UseGuards(AuthenticationGuard, RoleBasedGuard)

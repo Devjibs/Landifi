@@ -16,7 +16,12 @@ import {
   LANDLORD_MODEL,
   LandlordSchema,
 } from 'src/landlords/schemas/landlord.schema';
-import { PROPERTYMODEL, PropertySchema } from 'src/properties/schema/property.schema';
+import { LEASEMODEL, LeaseSchema } from 'src/leases/schemas/lease.schema';
+import {
+  PROPERTYMODEL,
+  PropertySchema,
+} from 'src/properties/schema/property.schema';
+import { SALEMODEL, SaleSchema } from 'src/sales/schemas/sale.schema';
 import { USER_MODEL, UserSchema } from 'src/users/schemas/user.schema';
 
 const MODELS = [
@@ -31,13 +36,19 @@ const MODELS = [
     name: EMAILVERIFICATIONTOKENMODEL,
     schema: EmailVerificationTokenSchema,
   },
-  { name: PROPERTYMODEL, schema: PropertySchema },
+  {
+    name: PROPERTYMODEL,
+    schema: PropertySchema,
+    discriminators: [
+      { name: SALEMODEL, schema: SaleSchema },
+      { name: LEASEMODEL, schema: LeaseSchema },
+    ],
+  },
 ];
 
 @Global()
 @Module({
   imports: [MongooseModule.forFeature(MODELS)],
-  providers: [],
   exports: [MongooseModule.forFeature(MODELS)],
 })
 export class MongooseSchemasModule {}

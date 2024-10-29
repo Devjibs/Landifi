@@ -1,15 +1,32 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { PropertyCategory, PropertyType } from 'src/common/enums/index.enum';
 
 export class SearchPropertyDto {
   @IsString()
   @IsOptional()
-  landloard: string;
+  title?: string;
+
+  @IsEnum(PropertyType)
+  @IsOptional()
+  type?: PropertyType;
 
   @IsString()
   @IsOptional()
-  status: string;
+  category?: PropertyCategory;
 
   @IsString()
   @IsOptional()
-  type: string;
+  status?: string;
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsNumber()
+  @IsOptional()
+  minPrice?: number;
+
+  @IsNumber()
+  @IsOptional()
+  maxPrice?: number;
 }

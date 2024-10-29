@@ -16,11 +16,7 @@ import {
   REFRESHTOKENMODEL,
 } from 'src/auth/schema/referesh-token.schema';
 import { UserParamsDto } from './dto/params-user.dto';
-import { MailService } from 'src/common/mail/mail.service';
-import {
-  EmailVerificationToken,
-  EMAILVERIFICATIONTOKENMODEL,
-} from 'src/auth/schema/verification-token.schema';
+import { EMAILVERIFICATIONTOKENMODEL } from 'src/auth/schema/verification-token.schema';
 import { PropertiesService } from 'src/properties/properties.service';
 
 @Injectable()
@@ -33,50 +29,6 @@ export class UsersService {
     @Inject(forwardRef(() => PropertiesService))
     private propertiesService: PropertiesService,
   ) {}
-
-  // async createUser(createUserDto: CreateUserDto): Promise<string | User> {
-  //   const { email, firstName, lastName, password, userType } = createUserDto;
-  //   const existingUser = await this.userModel.findOne({ email: email });
-  //   if (existingUser) {
-  //     throw new ConflictException('User already exists!');
-  //   }
-  //   const saltOrRounds = 15;
-  //   const hashedPassword = bcryptjs.hashSync(password, saltOrRounds);
-  //   const newUser = await this.userModel.create({
-  //     email,
-  //     password: hashedPassword,
-  //     firstName,
-  //     lastName,
-  //     userType,
-  //   });
-
-  //   if (!newUser) {
-  //     throw new InternalServerErrorException('Failed to create user!');
-  //   }
-
-  //   const newUserObject = newUser.toObject();
-
-  //   // Generate email verification link
-  //   const expiryDate = new Date();
-  //   expiryDate.setHours(expiryDate.getHours() + 1);
-  //   const verificationToken = nanoid(64);
-  //   const verificationOTP = crypto.randomInt(100000, 1000000).toString();
-  //   await this.emailVerificationModel.create({
-  //     OTP: verificationOTP,
-  //     token: verificationToken,
-  //     userId: newUserObject._id,
-  //     expiryDate,
-  //   });
-
-  //   // Send link to user by email
-  //   this.mailService.sendVerificationEmail(
-  //     email,
-  //     verificationOTP,
-  //     newUserObject.firstName,
-  //   );
-
-  //   return `Account created successfully. A token has been sent to ${email} and will expire in 1 hour time.`;
-  // }
 
   async findAllUsers(queryUserDto: QueryUserDto): Promise<string | User[]> {
     const { page = 1, limit = 10 } = queryUserDto;
@@ -116,10 +68,7 @@ export class UsersService {
     return users;
   }
 
-  async findUserById(
-    userParamsDto: UserParamsDto,
-    userId: string,
-  ): Promise<User> {
+  async findUserById(userParamsDto: UserParamsDto, userId: string) {
     if (userParamsDto.id !== userId) {
       throw new ForbiddenException('You are not authorized');
     }
@@ -128,7 +77,9 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with the specified ID not found!`);
     }
-    return user;
+
+    const { _id, firstName, lastName, email, userType } = user;
+    return { _id, firstName, lastName, email, userType };
   }
 
   async updateUser(
@@ -184,23 +135,4 @@ export class UsersService {
     }
     return user.userType;
   }
-
-  // Delete later if not useful
-  // async updateLandlordProperty(landlordId: string, propertyId) {
-  //   const landlord = await this.userModel.findOne({
-  //     _id: landlordId,
-  //     userType: 'landlord',
-  //   });
-  //   const {} = landlord
-  //   landlord.properties = propertyId;
-  //   landlord.save();
-
-  // await this.userModel.findOneAndUpdate(
-  //   { _id: landlordId },
-  //   {
-  //     $addToSet: { properties: propertyId },
-  //   },
-  //   { new: true },
-  // );
-  // }
 }

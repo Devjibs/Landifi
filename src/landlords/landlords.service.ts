@@ -30,6 +30,8 @@ import { USER_MODEL, UserDocument } from 'src/users/schemas/user.schema';
 import { LandlordParamsDto } from './dto/params-landlord.dto';
 import { UpdateLandlordDto } from './dto/update-landlord.dto';
 import { PropertiesService } from 'src/properties/properties.service';
+import { QueryPropertyDto } from 'src/properties/dto/query-property.dto';
+import { Role } from 'src/common/enums/index.enum';
 
 @Injectable()
 export class LandlordsService {
@@ -103,7 +105,7 @@ export class LandlordsService {
     const landlord = await this.landlordModel
       .findOne({
         id: userId,
-        userType: 'landlord',
+        userType: Role.LANDLORD,
       })
       .populate('properties');
     if (!landlord) {
@@ -124,7 +126,7 @@ export class LandlordsService {
     const updateLandlord = await this.landlordModel.findOneAndUpdate(
       {
         id: userId,
-        userType: 'landlord',
+        userType: Role.LANDLORD,
       },
       updateLandlordDto,
       {
@@ -161,5 +163,18 @@ export class LandlordsService {
     await this.propertiesService.removeAll(deletedLandlord._id.toString());
 
     return `User with the email: ${deletedLandlord.email} deleted successfully!`;
+  }
+
+  // Properties
+  async findAllPropertiesForLandlord(
+    queryPropertyDto: QueryPropertyDto,
+    userId,
+  ) {
+    const landloardProperties =
+      await this.propertiesService.findAllPropertiesForLandlord(
+        queryPropertyDto,
+        userId,
+      );
+    return landloardProperties;
   }
 }

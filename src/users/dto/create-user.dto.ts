@@ -34,7 +34,11 @@ export class CreateUserDto {
   password: string;
 
   @IsString()
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
   @MinLength(2)
   @MaxLength(30)
   @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
@@ -43,7 +47,11 @@ export class CreateUserDto {
   firstName: string;
 
   @IsString()
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
   @MinLength(2)
   @MaxLength(30)
   @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
@@ -52,7 +60,9 @@ export class CreateUserDto {
   lastName: string;
 
   @IsDefined()
-  @Transform(({ value }) => value.toLowerCase().trim())
+  @Transform(({ value }) => {
+    return value.trim().toLowerCase();
+  })
   @IsEnum(Role)
   userType: Role;
 

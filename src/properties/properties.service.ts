@@ -18,6 +18,7 @@ import {
   LANDLORD_MODEL,
   LandlordDocument,
 } from 'src/landlords/schemas/landlord.schema';
+import { Role } from 'src/common/enums/index.enum';
 
 @Injectable()
 export class PropertiesService {
@@ -56,14 +57,14 @@ export class PropertiesService {
     const newProperty = new this.propertyModel({
       ...createPropertyDto,
       images: propertyImagesArray,
-      owner: userId,
+      landlord: userId,
     });
     const savedProperty = await newProperty.save();
     if (!savedProperty) {
       throw new InternalServerErrorException('Failed to create new property!');
     }
     await this.landlordModel.findOneAndUpdate(
-      { _id: userId, userType: 'landlord' },
+      { _id: userId, userType: Role.LANDLORD },
       { $push: { properties: savedProperty._id } },
       { new: true },
     );
@@ -78,7 +79,7 @@ export class PropertiesService {
       .skip((+page - 1) * +limit)
       .limit(+limit)
       .populate(
-        'owner',
+        'landlord',
         '-updatedAt -isVerified -createdAt -leases -purchases -properties',
       );
 
@@ -86,7 +87,7 @@ export class PropertiesService {
       throw new NotFoundException('Failed to fetch properties!');
     }
     if (allProperties.length === 0) {
-      return 'Property resource is empty.';
+      return [];
     }
     return allProperties;
   }
@@ -95,7 +96,7 @@ export class PropertiesService {
     const property = await this.propertyModel
       .findById(propertyId)
       .populate(
-        'owner',
+        'landlord',
         '-updatedAt -isVerified -createdAt -leases -purchases -properties',
       );
     if (!property) {
@@ -108,7 +109,7 @@ export class PropertiesService {
     searchPropertyDto: SearchPropertyDto,
   ): Promise<Property[]> {
     if (
-      !searchPropertyDto.landloard &&
+      !searchPropertyDto.category &&
       !searchPropertyDto.status &&
       !searchPropertyDto.type
     ) {
@@ -128,6 +129,11 @@ export class PropertiesService {
     updatePropertyDto: UpdatePropertyDto,
     req,
   ) {
+    // TODO: Get existing images and delete them from cloudinary
+
+    // TODO: Upload new images to cloudinary
+
+    // TODO: Attach the new image data to the updated property
     const updatedProperty = await this.propertyModel.findByIdAndUpdate(
       propertyParam,
       updatePropertyDto,
@@ -162,11 +168,35 @@ export class PropertiesService {
 
   async removeAll(userId: string) {
     const deletedProperties = await this.propertyModel.deleteMany({
-      owner: userId,
+      landlord: userId,
     });
     if (!deletedProperties) {
       throw new NotFoundException('Failed to delete properties for the user!');
     }
     return 'All properties deleted successfully';
+  }
+
+  async findAllPropertiesForLandlord(
+    queryPropertyDto: QueryPropertyDto,
+    userId,
+  ) {
+    const { page = 1, limit = 20 } = queryPropertyDto;
+
+    const allProperties = await this.propertyModel
+      .find({ landlord: userId })
+      .skip((+page - 1) * +limit)
+      .limit(+limit)
+      .populate(
+        'landlord',
+        '-updatedAt -isVerified -createdAt -leases -purchases -properties',
+      );
+
+    if (!allProperties) {
+      throw new NotFoundException('Failed to fetch properties for user!');
+    }
+    if (allProperties.length === 0) {
+      return [];
+    }
+    return allProperties;
   }
 }

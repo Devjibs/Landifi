@@ -4,8 +4,19 @@ export enum Role {
   ADMIN = 'admin',
 }
 
-
 export enum PropertyType {
-  RENT = 'rent',
-  SALE = 'sale',
+  RESIDENTIAL = 'Residential',
+  COMMERCIAL = 'Commercial',
+  LAND = 'Land',
+}
+
+export enum PropertyCategory {
+  LEASE = 'Lease',
+  SALE = 'Sale',
+}
+
+export enum PropertyStatus {
+  AVAILABLE = 'Available',
+  RENTED = 'Rented',
+  SOLD = 'Sold',
 }
