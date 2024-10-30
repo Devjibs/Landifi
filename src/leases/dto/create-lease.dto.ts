@@ -5,6 +5,7 @@ import {
   IsDateString,
   IsNumber,
   IsOptional,
+  IsString,
 } from 'class-validator';
 import { CreatePropertyDto } from 'src/properties/dto/create-property.dto';
 
@@ -22,11 +23,13 @@ export class CreateLeaseDto extends CreatePropertyDto {
   @Transform(({ value }) => Number(value))
   securityDeposit: number;
 
-  @IsDateString()
+  @IsString()
+  // @Transform(({ value }) => value.toString())
   @IsOptional()
   leaseStartDate: string;
 
-  @IsDateString()
+  @IsString()
+  // @Transform(({ value }) => value.toString())
   @IsOptional()
   leaseEndDate: string;
 

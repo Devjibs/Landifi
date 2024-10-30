@@ -1,11 +1,9 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
   Patch,
   Param,
-  Delete,
   UseGuards,
   UseInterceptors,
   Req,
@@ -20,6 +18,8 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { Role } from 'src/common/enums/index.enum';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CustomRequest } from 'src/common/interfaces/request.interface';
+import { PropertyParamsDto } from 'src/properties/dto/params-property.dto';
+import { OwnershipGuard } from 'src/guards/Ownership.guards';
 
 @Controller('properties/leases')
 export class LeasesController {
@@ -38,23 +38,42 @@ export class LeasesController {
     return this.leasesService.create(createLeaseDto, images, req);
   }
 
-  @Get()
-  findAll() {
-    return this.leasesService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.leasesService.findOne(+id);
-  }
-
+  @UseGuards(AuthenticationGuard, RoleBasedGuard, OwnershipGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateLeaseDto: UpdateLeaseDto) {
-    return this.leasesService.update(+id, updateLeaseDto);
+  @Roles(Role.LANDLORD)
+  @UseInterceptors(FilesInterceptor('images', 5))
+  async update(
+    @Param() leasePropertyParamsDto: PropertyParamsDto,
+    @Body() updateLeaseDto: UpdateLeaseDto,
+    @Req() req: CustomRequest,
+    @UploadedFiles() // new ParseFilePipe({ validators: [new FileValidationPipe()] }),
+    images: Array<Express.Multer.File>,
+  ) {
+    return this.leasesService.update(
+      leasePropertyParamsDto.id,
+      updateLeaseDto,
+      req,
+      images,
+    );
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.leasesService.remove(+id);
-  }
+  // @Get()
+  // findAll() {
+  //   return this.leasesService.findAll();
+  // }
+
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.leasesService.findOne(+id);
+  // }
+
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateLeaseDto: UpdateLeaseDto) {
+  //   return this.leasesService.update(+id, updateLeaseDto);
+  // }
+
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.leasesService.remove(+id);
+  // }
 }

@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  NotImplementedException,
+} from '@nestjs/common';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Property, PROPERTYMODEL } from './schema/property.schema';
@@ -74,27 +80,6 @@ export class PropertiesService {
     return properties;
   }
 
-  async update(
-    propertyParam: string,
-    updatePropertyDto: UpdatePropertyDto,
-    req,
-  ) {
-    // TODO: Get existing images and delete them from cloudinary
-
-    // TODO: Upload new images to cloudinary
-
-    // TODO: Attach the new image data to the updated property
-    const updatedProperty = await this.propertyModel.findByIdAndUpdate(
-      propertyParam,
-      updatePropertyDto,
-      { new: true },
-    );
-
-    if (!updatePropertyDto) {
-      throw new NotFoundException(`Property not found!`);
-    }
-    return updatedProperty;
-  }
 
   async remove(propertyId: string, req: CustomRequest) {
     const { userId } = req;

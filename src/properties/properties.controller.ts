@@ -8,6 +8,8 @@ import {
   Req,
   UseGuards,
   Query,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PropertiesService } from './properties.service';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -19,6 +21,8 @@ import { RoleBasedGuard } from 'src/guards/role-based.guards';
 import { OwnershipGuard } from 'src/guards/Ownership.guards';
 import { QueryPropertyDto } from './dto/query-property.dto';
 import { SearchPropertyDto } from './dto/search-property.dto';
+import { CustomRequest } from 'src/common/interfaces/request.interface';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('properties')
 export class PropertiesController {
@@ -37,21 +41,6 @@ export class PropertiesController {
   @Get(':id')
   async findOne(@Param() propertyParamsDto: PropertyParamsDto) {
     return this.propertiesService.findOne(propertyParamsDto.id);
-  }
-
-  @UseGuards(AuthenticationGuard, RoleBasedGuard, OwnershipGuard)
-  @Patch(':id')
-  @Roles(Role.LANDLORD)
-  async update(
-    @Param() propertyParamsDto: PropertyParamsDto,
-    @Body() updatePropertyDto: UpdatePropertyDto,
-    @Req() req,
-  ) {
-    return this.propertiesService.update(
-      propertyParamsDto.id,
-      updatePropertyDto,
-      req,
-    );
   }
 
   @UseGuards(AuthenticationGuard, RoleBasedGuard, OwnershipGuard)

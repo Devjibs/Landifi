@@ -17,14 +17,14 @@ export class Lease extends Property {
   @Prop({ required: false, type: Number })
   securityDeposit: number;
 
+  @Prop({ required: false, type: Boolean, default: false })
+  isFurnished: boolean;
+
   @Prop({ type: Date, required: false })
   leaseStartDate: Date;
 
   @Prop({ type: Date, required: false })
   leaseEndDate: Date;
-
-  @Prop({ required: false, type: Boolean, default: false })
-  isFurnished: boolean;
 }
 
 export const LeaseSchema = SchemaFactory.createForClass(Lease);
