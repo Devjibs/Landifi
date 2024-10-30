@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  NotImplementedException,
 } from '@nestjs/common';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
@@ -16,6 +17,7 @@ import {
 import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
 import { CustomRequest } from 'src/common/interfaces/request.interface';
 import { Role } from 'src/common/enums/index.enum';
+import { ImageType } from 'src/common/types/index.type';
 
 @Injectable()
 export class SalesService {
@@ -45,10 +47,7 @@ export class SalesService {
     }
 
     const propertyImagesArray =
-      await this.cloudinaryService.uploadMultipleImages(
-        images,
-        'properties',
-      );
+      await this.cloudinaryService.uploadMultipleImages(images, 'properties');
 
     if (propertyImagesArray.length === 0) {
       throw new ConflictException('Failed to upload property images!');
@@ -78,19 +77,86 @@ export class SalesService {
     return savedProperty;
   }
 
-  findAll() {
-    return `This action returns all sales`;
+  async update(
+    propertyId: string,
+    updateSaleDto: UpdateSaleDto,
+    req: CustomRequest,
+    files: Array<Express.Multer.File>,
+  ) {
+    const { userId } = req;
+
+    const propertyToBeUpdated = await this.saleModel.findOne({
+      _id: propertyId,
+      landlord: userId,
+    });
+
+    // Check number of images
+    if (files && files.length > 5) {
+      throw new BadRequestException(
+        'You can only upload maximum of 5 images per property!',
+      );
+    }
+
+    // let newImagesArr: ImageType[] | [];
+
+    if (files && files.length > 0 && files.length <= 5) {
+      // Get existing images
+      const { images } = propertyToBeUpdated;
+      // Extract the images public_id
+      const imagesIdArr = images.map((img: ImageType) => img.public_id);
+
+      // Delete all the images with their IDs
+      await this.cloudinaryService.deleteMultipleImages(imagesIdArr);
+
+      // Upload new images
+      const propertyImagesArray =
+        await this.cloudinaryService.uploadMultipleImages(files, 'properties');
+
+      if (propertyImagesArray.length === 0) {
+        throw new ConflictException('Failed to upload property images!');
+      }
+
+      // Attach the new image data to the updated property
+      const updatedProperty = await this.saleModel.findByIdAndUpdate(
+        propertyId,
+        { ...updateSaleDto, images: propertyImagesArray },
+        { new: true },
+      );
+
+      if (!updatedProperty) {
+        throw new NotImplementedException(`Property update failed!`);
+      }
+
+      return updatedProperty;
+    }
+
+    // Attach the new image data to the updated property
+    const updatedProperty = await this.saleModel.findByIdAndUpdate(
+      propertyId,
+      { ...updateSaleDto },
+      { new: true },
+    );
+
+    if (!updatedProperty) {
+      throw new NotImplementedException(`Property update failed!`);
+    }
+
+    return updatedProperty;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} sale`;
-  }
+  // findAll() {
+  //   return `This action returns all sales`;
+  // }
 
-  update(id: number, updateSaleDto: UpdateSaleDto) {
-    return `This action updates a #${id} sale`;
-  }
+  // findOne(id: number) {
+  //   return `This action returns a #${id} sale`;
+  // }
 
-  remove(id: number) {
-    return `This action removes a #${id} sale`;
-  }
+  // update(id: number, updateSaleDto: UpdateSaleDto) {
+  //   return `This action updates a #${id} sale`;
+  // }
+
+  // remove(id: number) {
+  //   return `This action removes a #${id} sale`;
+  // }
 }
