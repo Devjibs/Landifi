@@ -86,6 +86,7 @@ export class UsersService {
     userParamsId: string,
     userId: string,
     updateUserDto: UpdateUserDto,
+    image: Express.Multer.File,
   ): Promise<User> {
     if (userParamsId !== userId) {
       throw new ForbiddenException('You are not authorized');
