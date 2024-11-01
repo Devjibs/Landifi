@@ -11,7 +11,7 @@ import * as crypto from 'crypto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, USER_MODEL, UserDocument } from 'src/users/schemas/user.schema';
+import { USER_MODEL, UserDocument } from 'src/users/schemas/user.schema';
 import { Model } from 'mongoose';
 import {
   RefreshToken,
@@ -172,7 +172,7 @@ export class AuthService {
     }
     const passwordMatch = await bcryptjs.compare(oldPassword, user.password);
     if (!passwordMatch) {
-      throw new UnauthorizedException('Wrong credentials!');
+      throw new NotFoundException('Wrong credentials!');
     }
     const newHashedPassword = await bcryptjs.hash(newPassword, 10);
     user.password = newHashedPassword;
@@ -220,7 +220,7 @@ export class AuthService {
       expiryDate: { $gte: new Date() },
     });
     if (!validToken) {
-      throw new UnauthorizedException('Expired OTP');
+      throw new NotFoundException('Expired OTP');
     }
     const user = await this.userModel.findById(validToken.userId);
     if (!user) {
@@ -238,6 +238,7 @@ export class AuthService {
     const validOTP = await this.emailVerificationModel.findOne({
       OTP: verificationOTP,
     });
+    
     if (!validOTP) {
       throw new NotFoundException('Invalid OTP');
     }
@@ -248,7 +249,7 @@ export class AuthService {
     });
 
     if (!validToken) {
-      throw new UnauthorizedException('Expired OTP. Get new OTP.');
+      throw new NotFoundException('Expired OTP. Get new OTP.');
     }
 
     const user = await this.userModel.findById(validToken.userId);

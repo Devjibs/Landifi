@@ -35,7 +35,12 @@ export class MailService {
       </section>`,
     };
 
-    await this.transporter.sendMail(mailOptions);
+    const respone = await this.transporter.sendMail(mailOptions);
+    if (!respone) {
+      console.log('Failed to send password reset email');
+    } else {
+      console.log('Password reset email sent successfully');
+    }
   }
 
   async sendVerificationEmail(
@@ -57,7 +62,12 @@ export class MailService {
       </section>`,
     };
 
-    await this.transporter.sendMail(mailOptions);
+    const respone = await this.transporter.sendMail(mailOptions);
+    if (!respone) {
+      console.log('Failed to send verification email');
+    } else {
+      console.log('Verification email sent successfully');
+    }
   }
 
   // TODO: Send email to landlords
