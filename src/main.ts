@@ -22,9 +22,9 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   app.useGlobalPipes(
     new ValidationPipe({
-      disableErrorMessages: true,
+      // disableErrorMessages: true,
       whitelist: true,
-      forbidNonWhitelisted: true,
+      // forbidNonWhitelisted: true,
       transform: true,
     }),
   );

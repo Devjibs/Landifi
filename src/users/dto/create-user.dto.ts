@@ -4,6 +4,7 @@ import {
   IsDefined,
   IsEmail,
   IsEnum,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
@@ -65,6 +66,83 @@ export class CreateUserDto {
   })
   @IsEnum(Role)
   userType: Role;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  gender: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  about: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  phone: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  age: number;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  occupation: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  address: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  location: string;
 
   @IsArray()
   @IsOptional()

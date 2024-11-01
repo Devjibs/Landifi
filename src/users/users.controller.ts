@@ -47,13 +47,13 @@ export class UsersController {
     @Param() userParamsDto: UserParamsDto,
     @Body() updateUserDto: UpdateUserDto,
     @Req() { userId },
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile() image?: Express.Multer.File, // Mark as optional
   ) {
     return this.usersService.updateUser(
       userParamsDto.id,
       userId,
       updateUserDto,
-      image
+      image,
     );
   }
 

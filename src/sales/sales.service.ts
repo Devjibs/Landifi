@@ -97,8 +97,6 @@ export class SalesService {
       );
     }
 
-    // let newImagesArr: ImageType[] | [];
-
     if (files && files.length > 0 && files.length <= 5) {
       // Get existing images
       const { images } = propertyToBeUpdated;
@@ -130,7 +128,6 @@ export class SalesService {
       return updatedProperty;
     }
 
-    // Attach the new image data to the updated property
     const updatedProperty = await this.saleModel.findByIdAndUpdate(
       propertyId,
       { ...updateSaleDto },

@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { Role } from 'src/common/enums/index.enum';
+import { ImageType } from 'src/common/types/index.type';
 
 // export type UserDocument = HydratedDocument<User>;
 
@@ -39,6 +40,30 @@ export class User {
     enum: Role,
   })
   userType: string;
+
+  @Prop({ type: String, required: false })
+  gender: string;
+
+  @Prop({ type: String, required: false })
+  about: string;
+
+  @Prop({ type: String, required: false })
+  phone: string;
+
+  @Prop({ type: Number, required: false })
+  age: number;
+
+  @Prop({ type: String, required: false })
+  occupation: string;
+
+  @Prop({ type: String, required: false })
+  address: number;
+
+  @Prop({ type: String, required: false })
+  location: number;
+
+  @Prop({ required: false, type: Object})
+  image: ImageType;
 
   @Prop({ default: false })
   isVerified: boolean;

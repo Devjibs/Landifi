@@ -1,9 +1,11 @@
 import {
+  ConflictException,
   ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
   NotFoundException,
+  NotImplementedException,
 } from '@nestjs/common';
 import { User, USER_MODEL } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
@@ -18,6 +20,7 @@ import {
 import { UserParamsDto } from './dto/params-user.dto';
 import { EMAILVERIFICATIONTOKENMODEL } from 'src/auth/schema/verification-token.schema';
 import { PropertiesService } from 'src/properties/properties.service';
+import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +31,7 @@ export class UsersService {
     @InjectModel(EMAILVERIFICATIONTOKENMODEL)
     @Inject(forwardRef(() => PropertiesService))
     private propertiesService: PropertiesService,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async findAllUsers(queryUserDto: QueryUserDto): Promise<string | User[]> {
@@ -74,22 +78,57 @@ export class UsersService {
     }
 
     const user = await this.userModel.findById(userId);
+
     if (!user) {
       throw new NotFoundException(`User with the specified ID not found!`);
     }
 
-    const { _id, firstName, lastName, email, userType } = user;
-    return { _id, firstName, lastName, email, userType };
+    return user;
   }
 
   async updateUser(
     userParamsId: string,
     userId: string,
     updateUserDto: UpdateUserDto,
-    image: Express.Multer.File,
+    image?: Express.Multer.File,
   ): Promise<User> {
     if (userParamsId !== userId) {
       throw new ForbiddenException('You are not authorized');
+    }
+
+    const userToBeUpdated = await this.userModel.findOne({
+      _id: userId,
+    });
+
+    if (image) {
+      // Get existing images
+      const { image: existingImage } = userToBeUpdated;
+      if (existingImage) {
+        await this.cloudinaryService.deleteImage(existingImage.public_id);
+      }
+
+      // Upload new images
+      const userImageObject = await this.cloudinaryService.uploadImage(
+        image,
+        'users',
+      );
+
+      if (!userImageObject) {
+        throw new ConflictException('Failed to upload user image!');
+      }
+
+      // Attach the new image data to the updated property
+      const updateUserWithImage = await this.userModel.findByIdAndUpdate(
+        userId,
+        { ...updateUserDto, image: userImageObject },
+        { new: true },
+      );
+
+      if (!updateUserWithImage) {
+        throw new NotImplementedException(`User profile update failed!`);
+      }
+
+      return updateUserWithImage;
     }
 
     const updatedUser = await this.userModel.findByIdAndUpdate(
@@ -103,6 +142,8 @@ export class UsersService {
     if (!updatedUser) {
       throw new NotFoundException(`User with the specified ID not found!`);
     }
+    console.log('Updated without image', updatedUser);
+
     return updatedUser;
   }
 
