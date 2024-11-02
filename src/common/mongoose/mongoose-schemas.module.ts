@@ -22,13 +22,17 @@ import {
   PropertySchema,
 } from 'src/properties/schema/property.schema';
 import { SALEMODEL, SaleSchema } from 'src/sales/schemas/sale.schema';
+import { TENANT_MODEL, TenantSchema } from 'src/tenants/schemas/tenant.schema';
 import { USER_MODEL, UserSchema } from 'src/users/schemas/user.schema';
 
 const MODELS = [
   {
     name: USER_MODEL,
     schema: UserSchema,
-    discriminators: [{ name: LANDLORD_MODEL, schema: LandlordSchema }],
+    discriminators: [
+      { name: LANDLORD_MODEL, schema: LandlordSchema },
+      { name: TENANT_MODEL, schema: TenantSchema },
+    ],
   },
   { name: REFRESHTOKENMODEL, schema: RefreshTokenSchema },
   { name: RESETTOKENMODEL, schema: ResetTokenSchema },

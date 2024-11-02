@@ -8,5 +8,6 @@ import { PropertiesModule } from 'src/properties/properties.module';
   imports: [UsersModule, PropertiesModule],
   controllers: [LeasesController],
   providers: [LeasesService],
+  exports: [LeasesService],
 })
 export class LeasesModule {}

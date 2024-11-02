@@ -5,6 +5,9 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { nanoid } from 'nanoid';
+import * as crypto from 'crypto';
+import { SALTORROUND } from 'src/constants/index.contant';
 import { CreateLandlordDto } from './dto/create-landlord.dto';
 import {
   Landlord,
@@ -23,9 +26,6 @@ import {
   EmailVerificationToken,
   EMAILVERIFICATIONTOKENMODEL,
 } from 'src/auth/schema/verification-token.schema';
-import { nanoid } from 'nanoid';
-import * as crypto from 'crypto';
-import { SALTORROUND } from 'src/constants/index.contant';
 import { USER_MODEL, UserDocument } from 'src/users/schemas/user.schema';
 import { LandlordParamsDto } from './dto/params-landlord.dto';
 import { UpdateLandlordDto } from './dto/update-landlord.dto';
@@ -52,7 +52,7 @@ export class LandlordsService {
     createLandordDto: CreateLandlordDto,
   ): Promise<string | Landlord> {
     const { email, firstName, lastName, password, userType } = createLandordDto;
-    const existingUser = await this.landlordModel.findOne({ email: email });
+    const existingUser = await this.userModel.findOne({ email: email });
     if (existingUser) {
       throw new ConflictException('User already exists!');
     }
