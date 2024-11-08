@@ -90,6 +90,7 @@ export class TenantsService {
 
   async saveProperty(propertyId: string, userId: string) {
     const alreadySavedProperty = await this.tenantModel.findOne({
+      _id: userId,
       savedProperties: { $in: [propertyId] },
     });
 

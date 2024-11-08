@@ -20,10 +20,7 @@ export class TenantsController {
   @UseGuards(AuthenticationGuard, RoleBasedGuard)
   @Roles(Role.TENANT)
   @Post('/saveproperty')
-  saveProperty(
-    @Body() propertyParamsDto: PropertyParamsDto,
-    @Req() { userId },
-  ) {
-    return this.tenantsService.saveProperty(propertyParamsDto.id, userId);
+  saveProperty(@Body() propertyId: string, @Req() { userId }) {
+    return this.tenantsService.saveProperty(propertyId, userId);
   }
 }
