@@ -22,6 +22,9 @@ import {
 import { MailService } from 'src/common/mail/mail.service';
 import { LeasesService } from 'src/leases/leases.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
+import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { Role } from 'src/common/enums/index.enum';
+import { PropertyParamsDto } from 'src/properties/dto/params-property.dto';
 
 @Injectable()
 export class TenantsService {
@@ -83,5 +86,27 @@ export class TenantsService {
     );
 
     return `Account created successfully. A token has been sent to ${email} and will expire in 1 hour time.`;
+  }
+
+  async saveProperty(propertyId: string, userId: string) {
+    const alreadySavedProperty = await this.tenantModel.findOne({
+      savedProperties: { $in: [propertyId] },
+    });
+
+    console.log(alreadySavedProperty);
+
+    // const updateTenantSavedProperty = await this.tenantModel.findOneAndUpdate(
+    //   { _id: userId, userType: Role.TENANT },
+    //   { $push: { savedProperties: propertyId } },
+    //   { new: true },
+    // );
+
+    // if (!updateTenantSavedProperty) {
+    //   throw new InternalServerErrorException(
+    //     'Failed to save property for user.',
+    //   );
+    // }
+
+    // return updateTenantSavedProperty;
   }
 }
