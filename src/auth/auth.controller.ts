@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthService } from './auth.service';
 import { RefreshTokenDto } from './dto/refresh-tokens.dto';
@@ -13,19 +21,24 @@ import { RequestionNewVerificationDto } from './dto/request-new-verification.dto
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @HttpCode(200)
   @Post('login')
   async loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.authService.loginUser(loginUserDto);
   }
 
-  @Post('emailverification')
+  @Post('email-verification')
   async emailVerification(@Body() verifyEmailDto: VerifyEmailDto) {
     return this.authService.emailVerification(verifyEmailDto);
   }
 
   @Post('new-verification-request')
-  async requestNewVerification(@Body() requestionNewVerificationDto: RequestionNewVerificationDto) {
-    return this.authService.requestNewVerification(requestionNewVerificationDto);
+  async requestNewVerification(
+    @Body() requestionNewVerificationDto: RequestionNewVerificationDto,
+  ) {
+    return this.authService.requestNewVerification(
+      requestionNewVerificationDto,
+    );
   }
 
   @Post('refresh-token')

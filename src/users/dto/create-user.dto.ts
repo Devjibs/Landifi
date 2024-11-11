@@ -1,14 +1,20 @@
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsDefined,
   IsEmail,
   IsEnum,
+  IsNumber,
+  IsOptional,
   IsString,
   Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { UserType } from '../schemas/user.schema';
+import { Role } from 'src/common/enums/index.enum';
+import { Lease } from 'src/leases/schemas/lease.schema';
+import { Property } from 'src/properties/schema/property.schema';
+import { Sale } from 'src/sales/schemas/sale.schema';
 
 export class CreateUserDto {
   @IsEmail()
@@ -29,7 +35,11 @@ export class CreateUserDto {
   password: string;
 
   @IsString()
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
   @MinLength(2)
   @MaxLength(30)
   @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
@@ -38,7 +48,11 @@ export class CreateUserDto {
   firstName: string;
 
   @IsString()
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
   @MinLength(2)
   @MaxLength(30)
   @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
@@ -47,7 +61,98 @@ export class CreateUserDto {
   lastName: string;
 
   @IsDefined()
-  @Transform(({ value }) => value.toLowerCase().trim())
-  @IsEnum(UserType)
-  userType: UserType;
+  @Transform(({ value }) => {
+    return value.trim().toLowerCase();
+  })
+  @IsEnum(Role)
+  userType: Role;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  gender: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  about: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  phone: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  age: number;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  occupation: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  address: string;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    return (
+      value.trim().charAt(0).toUpperCase() + value.trim().slice(1).toLowerCase()
+    );
+  })
+  // @Matches(/^[A-Za-zÀ-ÿẸỌṢẹọṣ-]+$/, {
+  //   message: 'Enter valid characters',
+  // })
+  location: string;
+
+  @IsArray()
+  @IsOptional()
+  properties: Property[];
+
+  @IsArray()
+  @IsOptional()
+  leases: Lease[];
+
+  @IsArray()
+  @IsOptional()
+  purchases: Sale[];
 }

@@ -1,86 +1,45 @@
 import {
   ConflictException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
+  NotImplementedException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './schemas/user.schema';
+import { User, USER_MODEL } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as bcryptjs from 'bcryptjs';
 import { QueryUserDto } from './dto/query-user.dto';
 import { SearchUserDto } from './dto/search-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { RefreshToken } from 'src/auth/schema/referesh-token.schema';
+import {
+  RefreshToken,
+  REFRESHTOKENMODEL,
+} from 'src/auth/schema/referesh-token.schema';
 import { UserParamsDto } from './dto/params-user.dto';
-import { MailService } from 'src/mail/mail.service';
-import { EmailVerificationToken } from 'src/auth/schema/verification-token.schema';
-import { nanoid } from 'nanoid';
-import * as crypto from 'crypto';
+import { EMAILVERIFICATIONTOKENMODEL } from 'src/auth/schema/verification-token.schema';
+import { PropertiesService } from 'src/properties/properties.service';
+import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-    @InjectModel(RefreshToken.name)
+    @InjectModel(USER_MODEL) private userModel: Model<User>,
+    @InjectModel(REFRESHTOKENMODEL)
     private refreshTokenModel: Model<RefreshToken>,
-    @InjectModel(EmailVerificationToken.name)
-    private emailVerificationModel: Model<EmailVerificationToken>,
-    private mailService: MailService,
+    @InjectModel(EMAILVERIFICATIONTOKENMODEL)
+    @Inject(forwardRef(() => PropertiesService))
+    private propertiesService: PropertiesService,
+    private cloudinaryService: CloudinaryService,
   ) {}
-
-  async createUser(createUserDto: CreateUserDto): Promise<string | User> {
-    const { email, firstName, lastName, password, userType } = createUserDto;
-    const existingUser = await this.userModel.findOne({ email: email });
-    if (existingUser) {
-      throw new ConflictException('User already exists!');
-    }
-    const saltOrRounds = 15;
-    const hashedPassword = bcryptjs.hashSync(password, saltOrRounds);
-    const newUser = await this.userModel.create({
-      email,
-      password: hashedPassword,
-      firstName,
-      lastName,
-      userType,
-    });
-
-    if (!newUser) {
-      throw new InternalServerErrorException('Failed to create user!');
-    }
-
-    const newUserObject = newUser.toObject();
-
-    // Generate email verification link
-    const expiryDate = new Date();
-    expiryDate.setHours(expiryDate.getHours() + 1);
-    const verificationToken = nanoid(64);
-    const verificationOTP = crypto.randomInt(100000, 1000000).toString();
-    await this.emailVerificationModel.create({
-      OTP: verificationOTP,
-      token: verificationToken,
-      userId: newUserObject._id,
-      expiryDate,
-    });
-
-    // Send link to user by email
-    this.mailService.sendVerificationEmail(
-      email,
-      verificationOTP,
-      newUserObject.firstName,
-    );
-
-    return 'Account created successfully. Please check your email to proceed.';
-  }
 
   async findAllUsers(queryUserDto: QueryUserDto): Promise<string | User[]> {
     const { page = 1, limit = 10 } = queryUserDto;
     const allUsers = await this.userModel
       .find()
-
+      .select('-leases -purchases')
+      .populate('properties')
       .skip((+page - 1) * +limit)
       .limit(+limit);
 
@@ -90,6 +49,7 @@ export class UsersService {
     if (allUsers.length === 0) {
       return 'User resource array is empty!';
     }
+
     return allUsers;
   }
 
@@ -112,21 +72,63 @@ export class UsersService {
     return users;
   }
 
-  async findUserById(userId: string): Promise<User> {
+  async findUserById(userParamsDto: UserParamsDto, userId: string) {
+    if (userParamsDto.id !== userId) {
+      throw new ForbiddenException('You are not authorized');
+    }
+
     const user = await this.userModel.findById(userId);
+
     if (!user) {
       throw new NotFoundException(`User with the specified ID not found!`);
     }
+
     return user;
   }
 
   async updateUser(
-    userParamsDto: UserParamsDto,
+    userParamsId: string,
     userId: string,
     updateUserDto: UpdateUserDto,
+    image?: Express.Multer.File,
   ): Promise<User> {
-    if (userParamsDto.id !== userId) {
+    if (userParamsId !== userId) {
       throw new ForbiddenException('You are not authorized');
+    }
+
+    const userToBeUpdated = await this.userModel.findOne({
+      _id: userId,
+    });
+
+    if (image) {
+      // Get existing images
+      const { image: existingImage } = userToBeUpdated;
+      if (existingImage) {
+        await this.cloudinaryService.deleteImage(existingImage.public_id);
+      }
+
+      // Upload new images
+      const userImageObject = await this.cloudinaryService.uploadImage(
+        image,
+        'users',
+      );
+
+      if (!userImageObject) {
+        throw new ConflictException('Failed to upload user image!');
+      }
+
+      // Attach the new image data to the updated property
+      const updateUserWithImage = await this.userModel.findByIdAndUpdate(
+        userId,
+        { ...updateUserDto, image: userImageObject },
+        { new: true },
+      );
+
+      if (!updateUserWithImage) {
+        throw new NotImplementedException(`User profile update failed!`);
+      }
+
+      return updateUserWithImage;
     }
 
     const updatedUser = await this.userModel.findByIdAndUpdate(
@@ -140,6 +142,8 @@ export class UsersService {
     if (!updatedUser) {
       throw new NotFoundException(`User with the specified ID not found!`);
     }
+    console.log('Updated without image', updatedUser);
+
     return updatedUser;
   }
 
@@ -160,7 +164,17 @@ export class UsersService {
 
     // Delete refresh token from database if user is deleted
     await this.refreshTokenModel.findOneAndDelete({ userId: deletedUser._id });
+    // Delete all property by the user
+    await this.propertiesService.removeAll(deletedUser._id.toString());
 
-    return `User deleted successfully!`;
+    return `User with the email: ${deletedUser.email} deleted successfully!`;
+  }
+
+  async getUserPermission(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User not found!`);
+    }
+    return user.userType;
   }
 }
