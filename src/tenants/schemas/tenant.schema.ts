@@ -9,7 +9,7 @@ import { User } from 'src/users/schemas/user.schema';
 export class Tenant extends User {
   @Prop({
     type: [SchemaTypes.ObjectId],
-    ref: 'Properties',
+    ref: 'Property',
   })
   savedProperties: Types.ObjectId[] | Property[];
 
