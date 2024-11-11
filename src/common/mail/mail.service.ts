@@ -22,7 +22,7 @@ export class MailService {
     firstName: string,
   ) {
     const mailOptions = {
-      from: `'Landifi' <${this.configService.get<string>('emailAuth.user')}>`,
+      from: `Landifi <${this.configService.get<string>('emailAuth.user')}>`,
       to: recipientEmail,
       subject: 'Password Reset OTP',
       html: `<section>
@@ -49,7 +49,7 @@ export class MailService {
     firstName: string,
   ) {
     const mailOptions = {
-      from: `'Landifi' <${this.configService.get<string>('emailAuth.user')}>`,
+      from: `Landifi <${this.configService.get<string>('emailAuth.user')}>`,
       to: recipientEmail,
       subject: 'Email Verification OTP',
       html: `<section>

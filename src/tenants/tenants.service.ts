@@ -1,7 +1,9 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -22,6 +24,10 @@ import {
 import { MailService } from 'src/common/mail/mail.service';
 import { LeasesService } from 'src/leases/leases.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
+import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { Role } from 'src/common/enums/index.enum';
+import { PropertyParamsDto } from 'src/properties/dto/params-property.dto';
+import { TenantParamsDto } from './dto/params-tenant.dto';
 
 @Injectable()
 export class TenantsService {
@@ -83,5 +89,55 @@ export class TenantsService {
     );
 
     return `Account created successfully. A token has been sent to ${email} and will expire in 1 hour time.`;
+  }
+
+  async saveProperty(propertyParamsDto: PropertyParamsDto, userId: string) {
+    const alreadySavedProperty = await this.tenantModel.findOne({
+      _id: userId,
+      savedProperties: { $in: [propertyParamsDto.id] },
+    });
+
+    console.log('Already saved', alreadySavedProperty);
+    if (alreadySavedProperty !== null) {
+      throw new ConflictException('Property already saved for user.');
+    }
+
+    const updateTenantSavedProperty = await this.tenantModel.findOneAndUpdate(
+      { _id: userId, userType: Role.TENANT },
+      { $push: { savedProperties: propertyParamsDto.id } },
+      { new: true },
+    );
+
+    console.log('Updated tenant', updateTenantSavedProperty);
+
+    if (!updateTenantSavedProperty) {
+      throw new InternalServerErrorException(
+        'Failed to save property for user.',
+      );
+    }
+
+    return updateTenantSavedProperty;
+  }
+
+  async findTenantSaveProperties(
+    tenantPropertyDto: TenantParamsDto,
+    userId: string,
+  ) {
+    if (tenantPropertyDto.id !== userId) {
+      throw new ForbiddenException('You are not authorized');
+    }
+
+    const saveProperties = await this.tenantModel
+      .findById(userId)
+      .select('savedProperties')
+      .populate('savedProperties');
+
+    if (!saveProperties) {
+      throw new NotFoundException(`User's saved properties not found!`);
+    }
+
+    const { savedProperties: allSavePropertiesForTenant } = saveProperties;
+    
+    return allSavePropertiesForTenant;
   }
 }
